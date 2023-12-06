@@ -73,6 +73,8 @@ their host system as well as Flatpak.
 [Liri OS](https://liri.io/download/silverblue/) has the option to install
 their distribution using ostree.
 
+[TorizonCore](https://developer.toradex.com/torizon/working-with-torizon/torizoncore-technical-overview/) is a Linux distribution for embedded systems that updates via OSTree images delivered via [Uptane](https://uptane.github.io/) and [aktualizr](https://github.com/uptane/aktualizr/).
+
 ## Distribution build tools
 
 [meta-updater](https://github.com/advancedtelematic/meta-updater) is
@@ -85,8 +87,15 @@ which uses libostree.
 The [BuildStream](https://gitlab.com/BuildStream/buildstream) build and
 integration tool supports importing and exporting from libostree repos.
 
+[fedora-iot/otto](https://github.com/fedora-iot/otto) is a tool that helps
+ship ostree commits inside Docker/OCI containers and run a webserver
+to serve the commits.
+
 Fedora [coreos-assembler](https://github.com/coreos/coreos-assembler) is
 the build tool used to generate Fedora CoreOS derivatives.
+
+[debos](https://github.com/go-debos/debos) is a tool-chain for simplifying the
+process of building a Debian-based OS image.
 
 ## Projects linking to libostree
 
@@ -106,6 +115,8 @@ use the "libostree host system" aspects (e.g. bootloader management), just the
 "git-like hardlink dedup". For example, Flatpak supports a per-user OSTree
 repository.
 
+[aktualizr](https://github.com/uptane/aktualizr/) is an [Uptane](https://uptane.github.io/)-conformant software update client library intended for use in automotive and other security-sensitive embedded devices. It uses OSTree to manage the OS of the host device by default.
+
 ## Language bindings
 
 libostree is accessible via [GObject Introspection](https://gi.readthedocs.io/en/latest/);
@@ -119,7 +130,7 @@ write higher level manual bindings on top; this is more common
 for statically compiled languages.  Here's a list of such bindings:
 
  - [ostree-go](https://github.com/ostreedev/ostree-go/)
- - [ostree-rs](https://github.com/ostreedev/ostree-rs/)
+ - [ostree-rs](./rust-bindings)
 
 ## Building
 
@@ -131,7 +142,7 @@ However, in order to build from a git clone, you must update the
 submodules.  If you're packaging OSTree and want a tarball, I
 recommend using a "recursive git archive" script.  There are several
 available online;
-[this code](https://github.com/ostreedev/ostree/blob/main/packaging/Makefile.dist-packaging#L11)
+[this code](https://github.com/ostreedev/ostree/blob/main/ci/Makefile.dist-packaging#L18)
 in OSTree is an example.
 
 Once you have a git clone or recursive archive, building is the
@@ -147,9 +158,8 @@ make install DESTDIR=/path/to/dest
 
 ## Contact and discussion forums
 
-OSTree has a [mailing list](https://mail.gnome.org/archives/ostree-list/) and
-there is also an `#ostree` channel on [Libera.Chat](ircs://irc.libera.chat/ostree).  However, asynchronous+logged
-communication is preferred for nontrivial questions.
+There is also an `#ostree` channel on [Libera.Chat](ircs://irc.libera.chat/ostree) as
+well as [enabled Github discussions](https://github.com/ostreedev/ostree/discussions/).
 
 ## Contributing
 

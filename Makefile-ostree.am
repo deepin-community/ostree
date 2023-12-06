@@ -72,7 +72,9 @@ ostree_SOURCES += \
 	src/ostree/ot-admin-builtin-finalize-staged.c \
 	src/ostree/ot-admin-builtin-boot-complete.c \
 	src/ostree/ot-admin-builtin-undeploy.c \
+	src/ostree/ot-admin-builtin-set-default.c \
 	src/ostree/ot-admin-builtin-instutil.c \
+	src/ostree/ot-admin-builtin-kargs.c \
 	src/ostree/ot-admin-builtin-cleanup.c \
 	src/ostree/ot-admin-builtin-os-init.c \
 	src/ostree/ot-admin-builtin-set-origin.c \
@@ -88,6 +90,8 @@ ostree_SOURCES += \
 	src/ostree/ot-admin-instutil-builtins.h \
 	src/ostree/ot-admin-functions.h \
 	src/ostree/ot-admin-functions.c \
+	src/ostree/ot-admin-kargs-builtins.h \
+	src/ostree/ot-admin-kargs-builtin-edit-in-place.c \
 	$(NULL)
 
 # Remote subcommand
@@ -138,14 +142,7 @@ if USE_CURL_OR_SOUP
 ostree_SOURCES += src/ostree/ot-builtin-pull.c
 endif
 
-if USE_LIBSOUP
-# Eventually once we stop things from using this, we should support disabling this
-ostree_SOURCES += src/ostree/ot-builtin-trivial-httpd.c
-pkglibexec_PROGRAMS += ostree-trivial-httpd
-ostree_trivial_httpd_SOURCES = src/ostree/ostree-trivial-httpd.c
-ostree_trivial_httpd_CFLAGS = $(ostree_bin_shared_cflags) $(OT_INTERNAL_SOUP_CFLAGS)
-ostree_trivial_httpd_LDADD = $(ostree_bin_shared_ldadd) $(OT_INTERNAL_SOUP_LIBS)
-
+if USE_LIBSOUP_OR_LIBSOUP3
 if !USE_CURL
 # This is necessary for the cookie jar bits
 ostree_CFLAGS += $(OT_INTERNAL_SOUP_CFLAGS)
@@ -157,8 +154,3 @@ if USE_LIBARCHIVE
 ostree_CFLAGS += $(OT_DEP_LIBARCHIVE_CFLAGS)
 ostree_LDADD += $(OT_DEP_LIBARCHIVE_LIBS)
 endif
-
-if USE_LIBSODIUM
-ostree_CFLAGS += $(OT_DEP_LIBSODIUM_CFLAGS)
-ostree_LDADD += $(OT_DEP_LIBSODIUM_LIBS)
-endif # USE_LIBSODIUM

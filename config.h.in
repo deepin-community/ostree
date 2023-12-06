@@ -3,9 +3,6 @@
 /* Define if we are building with asan and ubsan */
 #undef BUILDOPT_ASAN
 
-/* Define if we are enabling ostree trivial-httpd entrypoint */
-#undef BUILDOPT_ENABLE_TRIVIAL_HTTPD_CMDLINE
-
 /* Define if we enable http2 by default */
 #undef BUILDOPT_HTTP2
 
@@ -39,6 +36,9 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* Define if we have libcomposefs */
+#undef HAVE_COMPOSEFS
+
 /* Define to 1 if you have the declaration of `copy_file_range', and to 0 if
    you don't. */
 #undef HAVE_DECL_COPY_FILE_RANGE
@@ -57,6 +57,15 @@
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
+
+/* Define if ed25519 is supported */
+#undef HAVE_ED25519
+
+/* Define if FSCONFIG_CMD_CREATE is available in linux/mount.h */
+#undef HAVE_FSCONFIG_CMD_CREATE_LINUX_MOUNT_H
+
+/* Define if FSCONFIG_CMD_CREATE is available in sys/mount.h */
+#undef HAVE_FSCONFIG_CMD_CREATE_SYS_MOUNT_H
 
 /* Define if we have gnutls */
 #undef HAVE_GNUTLS
@@ -82,8 +91,14 @@
 /* Define if we have libsoup.pc */
 #undef HAVE_LIBSOUP
 
+/* Define if we have libsoup3 */
+#undef HAVE_LIBSOUP3
+
 /* Define if we have libsoup client certs */
 #undef HAVE_LIBSOUP_CLIENT_CERTS
+
+/* Define if we have libsoup.pc or libsoup3.pc */
+#undef HAVE_LIBSOUP_OR_LIBSOUP3
 
 /* Define if we have libsystemd.pc */
 #undef HAVE_LIBSYSTEMD

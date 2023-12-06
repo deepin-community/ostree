@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2016 Colin Walters <walters@verbum.org>
+ * Copyright (C) 2014 Colin Walters <walters@verbum.org>
+ * Copyright (C) 2022 Huijing Hei <hhei@redhat.com>
  *
  * SPDX-License-Identifier: LGPL-2.0+
  *
@@ -17,24 +18,19 @@
  * License along with this library. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "config.h"
+#pragma once
 
 #include "ot-main.h"
-#include "ot-builtins.h"
-#include "ostree.h"
-#include "otutil.h"
 
-gboolean
-ostree_builtin_trivial_httpd (int argc, char **argv, OstreeCommandInvocation *invocation, GCancellable *cancellable, GError **error)
-{
-  g_autoptr(GPtrArray) new_argv = g_ptr_array_new ();
+G_BEGIN_DECLS
 
-  g_ptr_array_add (new_argv, PKGLIBEXECDIR "/ostree-trivial-httpd");
-  for (int i = 1; i < argc; i++)
-    g_ptr_array_add (new_argv, argv[i]);
-  g_ptr_array_add (new_argv, NULL);
-  execvp (new_argv->pdata[0], (char**)new_argv->pdata);
-  /* Fall through on error */
-  glnx_set_error_from_errno (error);
-  return FALSE;
-}
+#define BUILTINPROTO(name) \
+  gboolean ot_admin_kargs_builtin_##name (int argc, char **argv, \
+                                          OstreeCommandInvocation *invocation, \
+                                          GCancellable *cancellable, GError **error)
+
+BUILTINPROTO (edit_in_place);
+
+#undef BUILTINPROTO
+
+G_END_DECLS

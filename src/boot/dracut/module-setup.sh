@@ -19,6 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library. If not, see <https://www.gnu.org/licenses/>.
 
+installkernel() {
+    instmods erofs overlay
+}
+
 check() {
     if [[ -x $systemdutildir/systemd ]] && [[ -x /usr/lib/ostree/ostree-prepare-root ]]; then
        return 255
@@ -33,6 +37,14 @@ depends() {
 
 install() {
     dracut_install /usr/lib/ostree/ostree-prepare-root
+    for r in /usr/lib /etc; do
+        if test -f "$r/ostree/prepare-root.conf"; then
+            inst_simple "$r/ostree/prepare-root.conf"
+        fi
+    done
+    if test -f "/etc/ostree/initramfs-root-binding.key"; then
+        inst_simple "/etc/ostree/initramfs-root-binding.key"
+    fi
     inst_simple "${systemdsystemunitdir}/ostree-prepare-root.service"
     mkdir -p "${initdir}${systemdsystemconfdir}/initrd-root-fs.target.wants"
     ln_r "${systemdsystemunitdir}/ostree-prepare-root.service" \

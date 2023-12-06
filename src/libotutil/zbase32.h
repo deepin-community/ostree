@@ -7,12 +7,12 @@
 #ifndef __INCL_base32_h
 #define __INCL_base32_h
 
-static char const* const base32_h_cvsid = "$Id: base32.h,v 1.11 2003/12/15 01:16:19 zooko Exp $";
+static char const *const base32_h_cvsid = "$Id: base32.h,v 1.11 2003/12/15 01:16:19 zooko Exp $";
 
 static int const base32_vermaj = 0;
 static int const base32_vermin = 9;
 static int const base32_vermicro = 12;
-static char const* const base32_vernum = "0.9.12";
+static char const *const base32_vernum = "0.9.12";
 
 #include <assert.h>
 #include <stddef.h>
@@ -23,7 +23,7 @@ static char const* const base32_vernum = "0.9.12";
  *
  * @return an allocated string containing the zbase-32 encoded representation
  */
-char *zbase32_encode(const unsigned char *data, size_t length);
+char *zbase32_encode (const unsigned char *data, size_t length);
 
 #endif /* #ifndef __INCL_base32_h */
 
@@ -44,6 +44,6 @@ char *zbase32_encode(const unsigned char *data, size_t length);
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THIS SOFTWARE OR THE USE OR OTHER DEALINGS IN 
+ * OUT OF OR IN CONNECTION WITH THIS SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THIS SOFTWARE.
  */

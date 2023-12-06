@@ -20,14 +20,15 @@
 
 #include "config.h"
 
-#include "ostree-lzma-compressor.h"
 #include "ostree-lzma-common.h"
+#include "ostree-lzma-compressor.h"
 
 #include <errno.h>
 #include <lzma.h>
 #include <string.h>
 
-enum {
+enum
+{
   PROP_0,
   PROP_PARAMS
 };
@@ -40,7 +41,7 @@ enum {
  * LZMA.
  */
 
-static void _ostree_lzma_compressor_iface_init          (GConverterIface *iface);
+static void _ostree_lzma_compressor_iface_init (GConverterIface *iface);
 
 /**
  * OstreeLzmaCompressor:
@@ -56,10 +57,9 @@ struct _OstreeLzmaCompressor
   gboolean initialized;
 };
 
-G_DEFINE_TYPE_WITH_CODE (OstreeLzmaCompressor, _ostree_lzma_compressor,
-			 G_TYPE_OBJECT,
-			 G_IMPLEMENT_INTERFACE (G_TYPE_CONVERTER,
-						_ostree_lzma_compressor_iface_init))
+G_DEFINE_TYPE_WITH_CODE (OstreeLzmaCompressor, _ostree_lzma_compressor, G_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (G_TYPE_CONVERTER,
+                                                _ostree_lzma_compressor_iface_init))
 
 static void
 _ostree_lzma_compressor_finalize (GObject *object)
@@ -73,10 +73,8 @@ _ostree_lzma_compressor_finalize (GObject *object)
 }
 
 static void
-_ostree_lzma_compressor_set_property (GObject      *object,
-				      guint         prop_id,
-				      const GValue *value,
-				      GParamSpec   *pspec)
+_ostree_lzma_compressor_set_property (GObject *object, guint prop_id, const GValue *value,
+                                      GParamSpec *pspec)
 {
   OstreeLzmaCompressor *self = OSTREE_LZMA_COMPRESSOR (object);
 
@@ -90,14 +88,11 @@ _ostree_lzma_compressor_set_property (GObject      *object,
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
     }
-
 }
 
 static void
-_ostree_lzma_compressor_get_property (GObject    *object,
-				      guint       prop_id,
-				      GValue     *value,
-				      GParamSpec *pspec)
+_ostree_lzma_compressor_get_property (GObject *object, guint prop_id, GValue *value,
+                                      GParamSpec *pspec)
 {
   OstreeLzmaCompressor *self = OSTREE_LZMA_COMPRESSOR (object);
 
@@ -129,21 +124,16 @@ _ostree_lzma_compressor_class_init (OstreeLzmaCompressorClass *klass)
   gobject_class->get_property = _ostree_lzma_compressor_get_property;
   gobject_class->set_property = _ostree_lzma_compressor_set_property;
 
-  g_object_class_install_property (gobject_class,
-				   PROP_PARAMS,
-				   g_param_spec_variant ("params", "", "",
-							 G_VARIANT_TYPE ("a{sv}"),
-							 NULL,
-							 G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY |
-							 G_PARAM_STATIC_STRINGS));
+  g_object_class_install_property (
+      gobject_class, PROP_PARAMS,
+      g_param_spec_variant ("params", "", "", G_VARIANT_TYPE ("a{sv}"), NULL,
+                            G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS));
 }
 
 OstreeLzmaCompressor *
 _ostree_lzma_compressor_new (GVariant *params)
 {
-  return g_object_new (OSTREE_TYPE_LZMA_COMPRESSOR,
-		       "params", params,
-		       NULL);
+  return g_object_new (OSTREE_TYPE_LZMA_COMPRESSOR, "params", params, NULL);
 }
 
 static void
@@ -161,24 +151,17 @@ _ostree_lzma_compressor_reset (GConverter *converter)
 }
 
 static GConverterResult
-_ostree_lzma_compressor_convert (GConverter *converter,
-				 const void *inbuf,
-				 gsize       inbuf_size,
-				 void       *outbuf,
-				 gsize       outbuf_size,
-				 GConverterFlags flags,
-				 gsize      *bytes_read,
-				 gsize      *bytes_written,
-				 GError    **error)
+_ostree_lzma_compressor_convert (GConverter *converter, const void *inbuf, gsize inbuf_size,
+                                 void *outbuf, gsize outbuf_size, GConverterFlags flags,
+                                 gsize *bytes_read, gsize *bytes_written, GError **error)
 {
   OstreeLzmaCompressor *self = OSTREE_LZMA_COMPRESSOR (converter);
   int res;
-  lzma_action action; 
+  lzma_action action;
 
   if (inbuf_size != 0 && outbuf_size == 0)
     {
-      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NO_SPACE,
-         "Output buffer too small");
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NO_SPACE, "Output buffer too small");
       return G_CONVERTER_ERROR;
     }
 
@@ -186,7 +169,7 @@ _ostree_lzma_compressor_convert (GConverter *converter,
     {
       res = lzma_easy_encoder (&self->lstream, 8, LZMA_CHECK_CRC64);
       if (res != LZMA_OK)
-        goto out;
+        return _ostree_lzma_return (res, error);
       self->initialized = TRUE;
     }
 
@@ -204,12 +187,11 @@ _ostree_lzma_compressor_convert (GConverter *converter,
 
   res = lzma_code (&self->lstream, action);
   if (res != LZMA_OK && res != LZMA_STREAM_END)
-    goto out;
+    return _ostree_lzma_return (res, error);
 
   *bytes_read = inbuf_size - self->lstream.avail_in;
   *bytes_written = outbuf_size - self->lstream.avail_out;
 
- out:
   return _ostree_lzma_return (res, error);
 }
 

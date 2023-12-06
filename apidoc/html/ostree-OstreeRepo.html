@@ -190,7 +190,7 @@
 </td>
 </tr>
 <tr>
-<td class="function_type">const <span class="returnvalue">gchar</span> * const *
+<td class="function_type">const <span class="returnvalue">gchar</span> *const *
 </td>
 <td class="function_name">
 <a class="link" href="ostree-OstreeRepo.html#ostree-repo-get-default-repo-finders" title="ostree_repo_get_default_repo_finders ()">ostree_repo_get_default_repo_finders</a> <span class="c_punctuation">()</span>
@@ -950,6 +950,14 @@
 </tr>
 <tr>
 <td class="function_type">
+<span class="returnvalue">gboolean</span>
+</td>
+<td class="function_name">
+<a class="link" href="ostree-OstreeRepo.html#ostree-repo-commit-add-composefs-metadata" title="ostree_repo_commit_add_composefs_metadata ()">ostree_repo_commit_add_composefs_metadata</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
 <span class="returnvalue">void</span>
 </td>
 <td class="function_name">
@@ -1329,6 +1337,14 @@
 <span class="returnvalue">gboolean</span>
 </td>
 <td class="function_name">
+<a class="link" href="ostree-OstreeRepo.html#ostree-repo-regenerate-metadata" title="ostree_repo_regenerate_metadata ()">ostree_repo_regenerate_metadata</a> <span class="c_punctuation">()</span>
+</td>
+</tr>
+<tr>
+<td class="function_type">
+<span class="returnvalue">gboolean</span>
+</td>
+<td class="function_name">
 <a class="link" href="ostree-OstreeRepo.html#ostree-repo-regenerate-summary" title="ostree_repo_regenerate_summary ()">ostree_repo_regenerate_summary</a> <span class="c_punctuation">()</span>
 </td>
 </tr>
@@ -1390,10 +1406,6 @@
 <tr>
 <td class="datatype_keyword">enum</td>
 <td class="function_name"><a class="link" href="ostree-OstreeRepo.html#OstreeRepoCommitModifierFlags" title="enum OstreeRepoCommitModifierFlags">OstreeRepoCommitModifierFlags</a></td>
-</tr>
-<tr>
-<td class="datatype_keyword"> </td>
-<td class="function_name"><a class="link" href="ostree-OstreeRepo.html#OstreeRepoCheckoutAtOptions" title="OstreeRepoCheckoutAtOptions">OstreeRepoCheckoutAtOptions</a></td>
 </tr>
 <tr>
 <td class="datatype_keyword">enum</td>
@@ -2069,7 +2081,7 @@ repository (to see whether a ref was written).</p>
 <hr>
 <div class="refsect2">
 <a name="ostree-repo-get-default-repo-finders"></a><h3>ostree_repo_get_default_repo_finders ()</h3>
-<pre class="programlisting">const <span class="returnvalue">gchar</span> * const *
+<pre class="programlisting">const <span class="returnvalue">gchar</span> *const *
 ostree_repo_get_default_repo_finders (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepo" title="OstreeRepo"><span class="type">OstreeRepo</span></a> *self</code></em>);</pre>
 <p>Get the set of default repo finders configured. See the documentation for
 the "core.default-repo-finders" config key.</p>
@@ -2244,10 +2256,10 @@ This will automatically release the lock if it was acquired successfully.</p>
 2
 3
 4</pre></td>
-        <td class="listing_code"><pre class="programlisting"><span class="n">g_autoptr</span><span class="p">(</span><span class="n">OstreeRepoAutoLock</span><span class="p">)</span><span class="w"> </span><span class="n">lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span><span class="w"></span>
-<span class="n">lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ostree_repo_auto_lock_push</span><span class="w"> </span><span class="p">(</span><span class="n">repo</span><span class="p">,</span><span class="w"> </span><span class="n">lock_type</span><span class="p">,</span><span class="w"> </span><span class="n">cancellable</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="p">);</span><span class="w"></span>
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">lock</span><span class="p">)</span><span class="w"></span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">FALSE</span><span class="p">;</span><span class="w"></span></pre></td>
+        <td class="listing_code"><pre class="programlisting"><span class="n">g_autoptr</span><span class="p">(</span><span class="n">OstreeRepoAutoLock</span><span class="p">)</span><span class="w"> </span><span class="n">lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="n">lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ostree_repo_auto_lock_push</span><span class="w"> </span><span class="p">(</span><span class="n">repo</span><span class="p">,</span><span class="w"> </span><span class="n">lock_type</span><span class="p">,</span><span class="w"> </span><span class="n">cancellable</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">lock</span><span class="p">)</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">FALSE</span><span class="p">;</span></pre></td>
       </tr>
     </tbody>
   </table>
@@ -2711,7 +2723,7 @@ error if the provided remote does not exist.</p>
 <tr>
 <td class="parameter_name"><p>out_url</p></td>
 <td class="parameter_description"><p>Remote's URL. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
@@ -2761,7 +2773,7 @@ not exist.</p>
 <tr>
 <td class="parameter_name"><p>out_gpg_verify</p></td>
 <td class="parameter_description"><p>Remote's GPG option. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
@@ -2833,7 +2845,7 @@ remote does not exist.</p>
 <pre class="programlisting"><span class="returnvalue">gboolean</span>
 ostree_repo_remote_get_gpg_keys (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepo" title="OstreeRepo"><span class="type">OstreeRepo</span></a> *self</code></em>,
                                  <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
-                                 <em class="parameter"><code>const <span class="type">char</span> * const *key_ids</code></em>,
+                                 <em class="parameter"><code>const <span class="type">char</span> *const *key_ids</code></em>,
                                  <em class="parameter"><code><span class="type">GPtrArray</span> **out_keys</code></em>,
                                  <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
                                  <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
@@ -2904,7 +2916,7 @@ array can be used to limit which keys are included. If <em class="parameter"><co
 ostree_repo_remote_gpg_import (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepo" title="OstreeRepo"><span class="type">OstreeRepo</span></a> *self</code></em>,
                                <em class="parameter"><code>const <span class="type">char</span> *name</code></em>,
                                <em class="parameter"><code><span class="type">GInputStream</span> *source_stream</code></em>,
-                               <em class="parameter"><code>const <span class="type">char</span> * const *key_ids</code></em>,
+                               <em class="parameter"><code>const <span class="type">char</span> *const *key_ids</code></em>,
                                <em class="parameter"><code><span class="type">guint</span> *out_imported</code></em>,
                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
@@ -2945,7 +2957,8 @@ from the remote named <em class="parameter"><code>name</code></em>
 </tr>
 <tr>
 <td class="parameter_name"><p>key_ids</p></td>
-<td class="parameter_description"><p>a <code class="literal">NULL</code>-terminated array of GPG key IDs, or <code class="literal">NULL</code>. </p></td>
+<td class="parameter_description"><p>a <code class="literal">NULL</code>-terminated array of
+GPG key IDs, or <code class="literal">NULL</code>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/array"><span class="acronym">array</span></a> zero-terminated=1][<a href="http://foldoc.org/element-type"><span class="acronym">element-type</span></a> utf8][<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
@@ -3095,14 +3108,13 @@ means return errors without retrying</p></li>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_summary</p></td>
-<td class="parameter_description"><p>return location for raw summary data, or
-<code class="literal">NULL</code>. </p></td>
+<td class="parameter_description"><p>return location for raw summary data, or <code class="literal">NULL</code>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_signatures</p></td>
-<td class="parameter_description"><p>return location for raw summary
-signature data, or <code class="literal">NULL</code>. </p></td>
+<td class="parameter_description"><p>return location for raw summary signature
+data, or <code class="literal">NULL</code>. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
@@ -3338,12 +3350,12 @@ option name.  If an error is returned, <em class="parameter"><code>out_value</co
 <td class="parameter_name"><p>default_value</p></td>
 <td class="parameter_description"><p>Value returned if <em class="parameter"><code>option_name</code></em>
 is not present. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_value</p></td>
 <td class="parameter_description"><p>Return location for value. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
@@ -3385,7 +3397,7 @@ called.</p>
 <div class="refsect3">
 <a name="ostree-repo-get-parent.returns"></a><h4>Returns</h4>
 <p>Parent repository, or <code class="literal">NULL</code> if none. </p>
-<p><span class="annotation">[<a href="http://foldoc.org/transfer%20none"><span class="acronym">transfer none</span></a>]</span></p>
+<p><span class="annotation">[<a href="http://foldoc.org/transfer%20none"><span class="acronym">transfer none</span></a>][<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></p>
 </div>
 </div>
 <hr>
@@ -4302,7 +4314,7 @@ computed checksum.</p>
 <tr>
 <td class="parameter_name"><p>expected_checksum</p></td>
 <td class="parameter_description"><p>If provided, validate content against this checksum. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>object</p></td>
@@ -4312,7 +4324,7 @@ computed checksum.</p>
 <tr>
 <td class="parameter_name"><p>out_csum</p></td>
 <td class="parameter_description"><p>Binary checksum. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/array"><span class="acronym">array</span></a> fixed-size=32][<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/array"><span class="acronym">array</span></a> fixed-size=32][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
@@ -4365,7 +4377,7 @@ the checksum <em class="parameter"><code>expected_checksum</code></em>
 <tr>
 <td class="parameter_name"><p>expected_checksum</p></td>
 <td class="parameter_description"><p>If provided, validate content against this checksum. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>object</p></td>
@@ -4484,7 +4496,7 @@ be returned as <em class="parameter"><code>out_csum</code></em>
 <tr>
 <td class="parameter_name"><p>out_csum</p></td>
 <td class="parameter_description"><p>Binary checksum. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/array"><span class="acronym">array</span></a> fixed-size=32][<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/array"><span class="acronym">array</span></a> fixed-size=32][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>][<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
@@ -5010,8 +5022,9 @@ ostree_repo_write_content_finish (<em class="parameter"><code><a class="link" hr
 </tr>
 <tr>
 <td class="parameter_name"><p>out_csum</p></td>
-<td class="parameter_description"><p>A binary SHA256 checksum of the content object. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/transfer%20full"><span class="acronym">transfer full</span></a>]</span></td>
+<td class="parameter_description"><p>A binary SHA256
+checksum of the content object. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/transfer%20full"><span class="acronym">transfer full</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
@@ -5062,7 +5075,8 @@ find the given refspec in local.</p>
 <tr>
 <td class="parameter_name"><p>out_rev</p></td>
 <td class="parameter_description"><p>A checksum,or <code class="literal">NULL</code> if <em class="parameter"><code>allow_noent</code></em>
-is true and it does not exist. </p></td>
+is true and it
+does not exist. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>][<a href="http://foldoc.org/transfer%20full"><span class="acronym">transfer full</span></a>]</span></td>
 </tr>
 <tr>
@@ -5123,7 +5137,8 @@ using it has no effect.</p>
 <tr>
 <td class="parameter_name"><p>out_rev</p></td>
 <td class="parameter_description"><p>A checksum,or <code class="literal">NULL</code> if <em class="parameter"><code>allow_noent</code></em>
-is true and it does not exist. </p></td>
+is true and it
+does not exist. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>][<a href="http://foldoc.org/transfer%20full"><span class="acronym">transfer full</span></a>]</span></td>
 </tr>
 <tr>
@@ -6039,7 +6054,8 @@ file structure to <em class="parameter"><code>mtree</code></em>
 </tr>
 <tr>
 <td class="parameter_name"><p>archive</p></td>
-<td class="parameter_description"><p>A <code class="literal">struct archive</code>, but specified as void to avoid a dependency on the libarchive headers</p></td>
+<td class="parameter_description"><p>A <code class="literal">struct archive</code>, but specified as void to avoid a dependency on the libarchive
+headers</p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
@@ -6819,22 +6835,22 @@ overridden with an explicit timestamp via the
 <tr>
 <td class="parameter_name"><p>parent</p></td>
 <td class="parameter_description"><p>ASCII SHA256 checksum for parent, or <code class="literal">NULL</code> for none. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>subject</p></td>
 <td class="parameter_description"><p>Subject. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>body</p></td>
 <td class="parameter_description"><p>Body. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>metadata</p></td>
 <td class="parameter_description"><p>GVariant of type a{sv}, or <code class="literal">NULL</code> for none. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>root</p></td>
@@ -6843,8 +6859,9 @@ overridden with an explicit timestamp via the
 </tr>
 <tr>
 <td class="parameter_name"><p>out_commit</p></td>
-<td class="parameter_description"><p>Resulting ASCII SHA256 checksum for commit. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>]</span></td>
+<td class="parameter_description"><p>Resulting ASCII SHA256 checksum for
+commit. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
@@ -6895,22 +6912,22 @@ and <em class="parameter"><code>root_metadata_checksum</code></em>
 <tr>
 <td class="parameter_name"><p>parent</p></td>
 <td class="parameter_description"><p>ASCII SHA256 checksum for parent, or <code class="literal">NULL</code> for none. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>subject</p></td>
 <td class="parameter_description"><p>Subject. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>body</p></td>
 <td class="parameter_description"><p>Body. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>metadata</p></td>
 <td class="parameter_description"><p>GVariant of type a{sv}, or <code class="literal">NULL</code> for none. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>root</p></td>
@@ -6924,8 +6941,9 @@ and <em class="parameter"><code>root_metadata_checksum</code></em>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_commit</p></td>
-<td class="parameter_description"><p>Resulting ASCII SHA256 checksum for commit. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>]</span></td>
+<td class="parameter_description"><p>Resulting ASCII SHA256 checksum for
+commit. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
@@ -6976,7 +6994,8 @@ to <code class="literal">NULL</code>.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_metadata</p></td>
-<td class="parameter_description"><p>Metadata associated with commit in with format "a{sv}", or <code class="literal">NULL</code> if none exists. </p></td>
+<td class="parameter_description"><p>Metadata associated with commit in with format
+"a{sv}", or <code class="literal">NULL</code> if none exists. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>][<a href="http://foldoc.org/transfer%20full"><span class="acronym">transfer full</span></a>]</span></td>
 </tr>
 <tr>
@@ -7030,8 +7049,67 @@ data will be deleted.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>metadata</p></td>
-<td class="parameter_description"><p>Metadata to associate with commit in with format "a{sv}", or <code class="literal">NULL</code> to delete. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_description"><p>Metadata to associate with commit in with format "a{sv}", or <code class="literal">NULL</code> to
+delete. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>Cancellable</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>Error</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<hr>
+<div class="refsect2">
+<a name="ostree-repo-commit-add-composefs-metadata"></a><h3>ostree_repo_commit_add_composefs_metadata ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
+ostree_repo_commit_add_composefs_metadata
+                               (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepo" title="OstreeRepo"><span class="type">OstreeRepo</span></a> *self</code></em>,
+                                <em class="parameter"><code><span class="type">guint</span> format_version</code></em>,
+                                <em class="parameter"><code><span class="type">GVariantDict</span> *dict</code></em>,
+                                <em class="parameter"><code><a class="link" href="ostree-ostree-repo-file.html#OstreeRepoFile" title="OstreeRepoFile"><span class="type">OstreeRepoFile</span></a> *repo_root</code></em>,
+                                <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Compute the composefs digest for a filesystem tree
+and insert it into metadata for a commit object.  The composefs
+digest covers the entire filesystem tree and can be verified by
+the composefs mount tooling.</p>
+<div class="refsect3">
+<a name="ostree-repo-commit-add-composefs-metadata.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>Repo</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>format_version</p></td>
+<td class="parameter_description"><p>Must be zero</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>dict</p></td>
+<td class="parameter_description"><p>A GVariant builder of type a{sv}</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>repo_root</p></td>
+<td class="parameter_description"><p>the target filesystem tree</p></td>
+<td class="parameter_annotations"> </td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
@@ -7052,7 +7130,7 @@ data will be deleted.</p>
 <a name="ostree-repo-checkout-at-options-set-devino"></a><h3>ostree_repo_checkout_at_options_set_devino ()</h3>
 <pre class="programlisting"><span class="returnvalue">void</span>
 ostree_repo_checkout_at_options_set_devino
-                               (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepoCheckoutAtOptions" title="OstreeRepoCheckoutAtOptions"><span class="type">OstreeRepoCheckoutAtOptions</span></a> *opts</code></em>,
+                               (<em class="parameter"><code><span class="type">OstreeRepoCheckoutAtOptions</span> *opts</code></em>,
                                 <em class="parameter"><code><span class="type">OstreeRepoDevInoCache</span> *cache</code></em>);</pre>
 <p>This function simply assigns <em class="parameter"><code>cache</code></em>
  to the <code class="literal">devino_to_csum_cache</code> member of
@@ -7234,7 +7312,7 @@ cache.</p>
 <a name="ostree-repo-checkout-at"></a><h3>ostree_repo_checkout_at ()</h3>
 <pre class="programlisting"><span class="returnvalue">gboolean</span>
 ostree_repo_checkout_at (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepo" title="OstreeRepo"><span class="type">OstreeRepo</span></a> *self</code></em>,
-                         <em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepoCheckoutAtOptions" title="OstreeRepoCheckoutAtOptions"><span class="type">OstreeRepoCheckoutAtOptions</span></a> *options</code></em>,
+                         <em class="parameter"><code><span class="type">OstreeRepoCheckoutAtOptions</span> *options</code></em>,
                          <em class="parameter"><code><span class="type">int</span> destination_dfd</code></em>,
                          <em class="parameter"><code>const <span class="type">char</span> *destination_path</code></em>,
                          <em class="parameter"><code>const <span class="type">char</span> *commit</code></em>,
@@ -7371,12 +7449,12 @@ ostree_repo_read_commit (<em class="parameter"><code><a class="link" href="ostre
 <tr>
 <td class="parameter_name"><p>out_root</p></td>
 <td class="parameter_description"><p>An <a class="link" href="ostree-ostree-repo-file.html#OstreeRepoFile" title="OstreeRepoFile"><span class="type">OstreeRepoFile</span></a> corresponding to the root. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_commit</p></td>
 <td class="parameter_description"><p>The resolved commit checksum. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>cancellable</p></td>
@@ -7464,6 +7542,8 @@ ostree_repo_list_commit_objects_starting_with
 with <em class="parameter"><code>start</code></em>
 , returning data in <em class="parameter"><code>out_commits</code></em>
 .</p>
+<p>To list all commit objects, provide the empty string <code class="literal">""</code> for <em class="parameter"><code>start</code></em>
+.</p>
 <div class="refsect3">
 <a name="ostree-repo-list-commit-objects-starting-with.parameters"></a><h4>Parameters</h4>
 <div class="informaltable"><table class="informaltable" width="100%" border="0">
@@ -7480,7 +7560,7 @@ with <em class="parameter"><code>start</code></em>
 </tr>
 <tr>
 <td class="parameter_name"><p>start</p></td>
-<td class="parameter_description"><p>List commits starting with this checksum</p></td>
+<td class="parameter_description"><p>List commits starting with this checksum (empty string for all)</p></td>
 <td class="parameter_annotations"> </td>
 </tr>
 <tr>
@@ -7534,7 +7614,8 @@ repository, returning its result in <em class="parameter"><code>out_deltas</code
 </tr>
 <tr>
 <td class="parameter_name"><p>out_deltas</p></td>
-<td class="parameter_description"><p>String name of deltas (checksum-checksum.delta). </p></td>
+<td class="parameter_description"><p>String name of deltas
+(checksum-checksum.delta). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/element-type"><span class="acronym">element-type</span></a> utf8][<a href="http://foldoc.org/transfer%20container"><span class="acronym">transfer container</span></a>]</span></td>
 </tr>
 <tr>
@@ -7578,7 +7659,8 @@ repository, returning its result in <em class="parameter"><code>out_indexes</cod
 </tr>
 <tr>
 <td class="parameter_name"><p>out_indexes</p></td>
-<td class="parameter_description"><p>String name of delta indexes (checksum). </p></td>
+<td class="parameter_description"><p>String name of delta indexes
+(checksum). </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/element-type"><span class="acronym">element-type</span></a> utf8][<a href="http://foldoc.org/transfer%20container"><span class="acronym">transfer container</span></a>]</span></td>
 </tr>
 <tr>
@@ -7611,7 +7693,8 @@ a particular commit (if <em class="parameter"><code>opt_to_commit</code></em>
  is non-<code class="literal">NULL</code>), or for all commits that
 are reachable by an existing delta (if <em class="parameter"><code>opt_to_commit</code></em>
  is <code class="literal">NULL</code>).</p>
-<p>This is normally called automatically when the summary is updated in <a class="link" href="ostree-OstreeRepo.html#ostree-repo-regenerate-summary" title="ostree_repo_regenerate_summary ()"><code class="function">ostree_repo_regenerate_summary()</code></a>.</p>
+<p>This is normally called automatically when the summary is updated in
+<a class="link" href="ostree-OstreeRepo.html#ostree-repo-regenerate-summary" title="ostree_repo_regenerate_summary ()"><code class="function">ostree_repo_regenerate_summary()</code></a>.</p>
 <p>Locking: shared</p>
 <div class="refsect3">
 <a name="ostree-repo-static-delta-reindex.parameters"></a><h4>Parameters</h4>
@@ -7674,7 +7757,8 @@ conveniently stored and applied offline.</p>
  argument should be an a{sv}.  The following attributes
 are known:</p>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
-<li class="listitem"><p>min-fallback-size: u: Minimum uncompressed size in megabytes to use fallback, 0 to disable fallbacks</p></li>
+<li class="listitem"><p>min-fallback-size: u: Minimum uncompressed size in megabytes to use fallback, 0 to disable
+fallbacks</p></li>
 <li class="listitem"><p>max-chunk-size: u: Maximum size in megabytes of a delta part</p></li>
 <li class="listitem"><p>max-bsdiff-size: u: Maximum size in megabytes to consider bsdiff compression
 for input files</p></li>
@@ -7682,10 +7766,12 @@ for input files</p></li>
 <li class="listitem"><p>bsdiff-enabled: b: Enable bsdiff compression.  Default TRUE.</p></li>
 <li class="listitem"><p>inline-parts: b: Put part data in header, to get a single file delta.  Default FALSE.</p></li>
 <li class="listitem"><p>verbose: b: Print diagnostic messages.  Default FALSE.</p></li>
-<li class="listitem"><p>endianness: b: Deltas use host byte order by default; this option allows choosing (G_BIG_ENDIAN or G_LITTLE_ENDIAN)</p></li>
-<li class="listitem"><p>filename: ay: Save delta superblock to this filename, and parts in the same directory.  Default saves to repository.</p></li>
-<li class="listitem"><p>sign-name: ay: Signature type to use.</p></li>
-<li class="listitem"><p>sign-key-ids: as: Array of keys used to sign delta superblock.</p></li>
+<li class="listitem"><p>endianness: b: Deltas use host byte order by default; this option allows choosing
+(G_BIG_ENDIAN or G_LITTLE_ENDIAN)</p></li>
+<li class="listitem"><p>filename: ^ay: Save delta superblock to this filename (bytestring), and parts in the same
+directory.  Default saves to repository.</p></li>
+<li class="listitem"><p>sign-name: ^ay: Signature type to use (bytestring).</p></li>
+<li class="listitem"><p>sign-key-ids: ^as: NULL-terminated array of keys used to sign delta superblock.</p></li>
 </ul></div>
 <div class="refsect3">
 <a name="ostree-repo-static-delta-generate.parameters"></a><h4>Parameters</h4>
@@ -7996,7 +8082,8 @@ from <em class="parameter"><code>commit_checksum</code></em>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_reachable</p></td>
-<td class="parameter_description"><p>Set of reachable objects. </p></td>
+<td class="parameter_description"><p>Set of reachable
+objects. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/transfer%20container"><span class="acronym">transfer container</span></a>][<a href="http://foldoc.org/element-type"><span class="acronym">element-type</span></a> GVariant GVariant]</span></td>
 </tr>
 <tr>
@@ -8757,7 +8844,8 @@ one around this call.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>refs_to_fetch</p></td>
-<td class="parameter_description"><p>Optional list of refs; if <code class="literal">NULL</code>, fetch all configured refs. </p></td>
+<td class="parameter_description"><p>Optional list of
+refs; if <code class="literal">NULL</code>, fetch all configured refs. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/array"><span class="acronym">array</span></a> zero-terminated=1][<a href="http://foldoc.org/element-type"><span class="acronym">element-type</span></a> utf8][<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
 </tr>
 <tr>
@@ -8824,7 +8912,8 @@ subpath.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>refs_to_fetch</p></td>
-<td class="parameter_description"><p>Optional list of refs; if <code class="literal">NULL</code>, fetch all configured refs. </p></td>
+<td class="parameter_description"><p>Optional list of
+refs; if <code class="literal">NULL</code>, fetch all configured refs. </p></td>
 <td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/array"><span class="acronym">array</span></a> zero-terminated=1][<a href="http://foldoc.org/element-type"><span class="acronym">element-type</span></a> utf8][<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
 </tr>
 <tr>
@@ -8881,19 +8970,32 @@ string to pull the latest commit for that ref</p></li>
 <li class="listitem"><p><code class="literal">disable-static-deltas</code> (<code class="literal">b</code>): Do not use static deltas</p></li>
 <li class="listitem"><p><code class="literal">require-static-deltas</code> (<code class="literal">b</code>): Require static deltas</p></li>
 <li class="listitem"><p><code class="literal">override-commit-ids</code> (<code class="literal">as</code>): Array of specific commit IDs to fetch for refs</p></li>
-<li class="listitem"><p><code class="literal">timestamp-check</code> (<code class="literal">b</code>): Verify commit timestamps are newer than current (when pulling via ref); Since: 2017.11</p></li>
-<li class="listitem"><p><code class="literal">timestamp-check-from-rev</code> (<code class="literal">s</code>): Verify that all fetched commit timestamps are newer than timestamp of given rev; Since: 2020.4</p></li>
-<li class="listitem"><p><code class="literal">metadata-size-restriction</code> (<code class="literal">t</code>): Restrict metadata objects to a maximum number of bytes; 0 to disable.  Since: 2018.9</p></li>
+<li class="listitem"><p><code class="literal">timestamp-check</code> (<code class="literal">b</code>): Verify commit timestamps are newer than current (when pulling via
+ref); Since: 2017.11</p></li>
+<li class="listitem"><p><code class="literal">timestamp-check-from-rev</code> (<code class="literal">s</code>): Verify that all fetched commit timestamps are newer than
+timestamp of given rev; Since: 2020.4</p></li>
+<li class="listitem"><p><code class="literal">max-metadata-size</code> (<code class="literal">t</code>): Restrict metadata objects to a maximum number of bytes; 0 to
+disable.  Since: 2018.9</p></li>
 <li class="listitem"><p><code class="literal">dry-run</code> (<code class="literal">b</code>): Only print information on what will be downloaded (requires static deltas)</p></li>
 <li class="listitem"><p><code class="literal">override-url</code> (<code class="literal">s</code>): Fetch objects from this URL if remote specifies no metalink in options</p></li>
-<li class="listitem"><p><code class="literal">inherit-transaction</code> (<code class="literal">b</code>): Don't initiate, finish or abort a transaction, useful to do multiple pulls in one transaction.</p></li>
+<li class="listitem"><p><code class="literal">inherit-transaction</code> (<code class="literal">b</code>): Don't initiate, finish or abort a transaction, useful to do
+multiple pulls in one transaction.</p></li>
 <li class="listitem"><p><code class="literal">http-headers</code> (<code class="literal">a(ss)</code>): Additional headers to add to all HTTP requests</p></li>
-<li class="listitem"><p><code class="literal">update-frequency</code> (<code class="literal">u</code>): Frequency to call the async progress callback in milliseconds, if any; only values higher than 0 are valid</p></li>
-<li class="listitem"><p><code class="literal">localcache-repos</code> (<code class="literal">as</code>): File paths for local repos to use as caches when doing remote fetches</p></li>
+<li class="listitem"><p><code class="literal">update-frequency</code> (<code class="literal">u</code>): Frequency to call the async progress callback in milliseconds, if
+any; only values higher than 0 are valid</p></li>
+<li class="listitem"><p><code class="literal">localcache-repos</code> (<code class="literal">as</code>): File paths for local repos to use as caches when doing remote
+fetches</p></li>
 <li class="listitem"><p><code class="literal">append-user-agent</code> (<code class="literal">s</code>): Additional string to append to the user agent</p></li>
 <li class="listitem"><p><code class="literal">n-network-retries</code> (<code class="literal">u</code>): Number of times to retry each download on receiving
 a transient network error, such as a socket timeout; default is 5, 0
 means return errors without retrying. Since: 2018.6</p></li>
+<li class="listitem"><p><code class="literal">low-speed-limit-bytes</code> (<code class="literal">u</code>): The average transfer speed per second of a transfer
+ during the time set via "low-speed-time-seconds" for libcurl to abort.</p></li>
+<li class="listitem"><p><code class="literal">low-speed-time-seconds</code> (<code class="literal">u</code>): The time in number seconds that the transfer
+ speed should be below the "low-speed-limit-bytes" setting for libcurl to abort.</p></li>
+<li class="listitem"><p><code class="literal">retry-all-network-errors</code> (<code class="literal">b</code>): Retry when network issues happen, instead of
+ failing automatically. Currently only affects libcurl. (Default set to true)</p></li>
+<li class="listitem"><p><code class="literal">max-outstanding-fetcher-requests</code> (<code class="literal">u</code>): The max amount of concurrent connections allowed.</p></li>
 <li class="listitem"><p><code class="literal">ref-keyring-map</code> (<code class="literal">a(sss)</code>): Array of (collection ID, ref name, keyring
 remote name) tuples specifying which remote's keyring should be used when
 doing GPG verification of each collection-ref. This is useful to prevent a
@@ -9177,8 +9279,8 @@ data.</p>
 </tr>
 <tr>
 <td class="parameter_name"><p>old_signatures</p></td>
-<td class="parameter_description"><p>Existing signatures to append to (or <code class="literal">NULL</code>)</p></td>
-<td class="parameter_annotations"> </td>
+<td class="parameter_description"><p>Existing signatures to append to (or <code class="literal">NULL</code>). </p></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>key_id</p></td>
@@ -9188,7 +9290,7 @@ data.</p>
 <tr>
 <td class="parameter_name"><p>homedir</p></td>
 <td class="parameter_description"><p>GPG home directory, or <code class="literal">NULL</code>. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/allow-none"><span class="acronym">allow-none</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>out_signatures</p></td>
@@ -9210,11 +9312,9 @@ data.</p>
 </div>
 <div class="refsect3">
 <a name="ostree-repo-gpg-sign-data.returns"></a><h4>Returns</h4>
-<p> <em class="parameter"><code>TRUE</code></em>
-if <em class="parameter"><code>data</code></em>
+<p> <code class="literal">TRUE</code> if <em class="parameter"><code>data</code></em>
 has been signed successfully,
-<em class="parameter"><code>FALSE</code></em>
-in case of error (<em class="parameter"><code>error</code></em>
+<code class="literal">FALSE</code> in case of error (<em class="parameter"><code>error</code></em>
 will contain the reason).</p>
 </div>
 <p class="since">Since: 2020.8</p>
@@ -9350,7 +9450,7 @@ both enabled, then both must find at least one valid signature.</p>
 <tr>
 <td class="parameter_name"><p>out_results</p></td>
 <td class="parameter_description"><p>Textual description of results. </p></td>
-<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>][<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/transfer%20full"><span class="acronym">transfer full</span></a>]</span></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/optional"><span class="acronym">optional</span></a>][<a href="http://foldoc.org/out"><span class="acronym">out</span></a>][<a href="http://foldoc.org/transfer%20full"><span class="acronym">transfer full</span></a>]</span></td>
 </tr>
 <tr>
 <td class="parameter_name"><p>error</p></td>
@@ -9605,6 +9705,72 @@ ostree_repo_verify_summary (<em class="parameter"><code><a class="link" href="os
 </div>
 <hr>
 <div class="refsect2">
+<a name="ostree-repo-regenerate-metadata"></a><h3>ostree_repo_regenerate_metadata ()</h3>
+<pre class="programlisting"><span class="returnvalue">gboolean</span>
+ostree_repo_regenerate_metadata (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepo" title="OstreeRepo"><span class="type">OstreeRepo</span></a> *self</code></em>,
+                                 <em class="parameter"><code><span class="type">GVariant</span> *additional_metadata</code></em>,
+                                 <em class="parameter"><code><span class="type">GVariant</span> *options</code></em>,
+                                 <em class="parameter"><code><span class="type">GCancellable</span> *cancellable</code></em>,
+                                 <em class="parameter"><code><span class="type">GError</span> **error</code></em>);</pre>
+<p>Regenerate the OSTree repository metadata used by clients to describe
+available branches and other metadata.</p>
+<p>The repository metadata currently consists of the <code class="literal">summary</code> file. See
+<a class="link" href="ostree-OstreeRepo.html#ostree-repo-regenerate-summary" title="ostree_repo_regenerate_summary ()"><code class="function">ostree_repo_regenerate_summary()</code></a> and <a class="link" href="ostree-Core-repository-independent-functions.html#OSTREE-SUMMARY-GVARIANT-FORMAT:CAPS" title="OSTREE_SUMMARY_GVARIANT_FORMAT"><code class="literal">OSTREE_SUMMARY_GVARIANT_FORMAT</code></a> for
+additional details on its contents.</p>
+<p>Additionally, if the <code class="literal">core/collection-id</code> key is set in the configuration, a
+<a class="link" href="ostree-ostree-repo-remote-finder.html#OSTREE-REPO-METADATA-REF:CAPS" title="OSTREE_REPO_METADATA_REF"><code class="literal">OSTREE_REPO_METADATA_REF</code></a> commit will be created.</p>
+<p>The following <em class="parameter"><code>options</code></em>
+ are currently defined:</p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem"><p><code class="literal">gpg-key-ids</code> (<code class="literal">as</code>): Array of GPG key IDs to sign the metadata with.</p></li>
+<li class="listitem"><p><code class="literal">gpg-homedir</code> (<code class="literal">s</code>): GPG home directory.</p></li>
+<li class="listitem"><p><code class="literal">sign-keys</code> (<code class="literal">av</code>): Array of keys to sign the metadata with. The key
+type is specific to the sign engine used.</p></li>
+<li class="listitem"><p><code class="literal">sign-type</code> (<code class="literal">s</code>): Sign engine type to use. If not specified,
+<code class="literal">OSTREE_SIGN_NAME_ED25519</code> is used.</p></li>
+</ul></div>
+<p>Locking: shared</p>
+<div class="refsect3">
+<a name="ostree-repo-regenerate-metadata.parameters"></a><h4>Parameters</h4>
+<div class="informaltable"><table class="informaltable" width="100%" border="0">
+<colgroup>
+<col width="150px" class="parameters_name">
+<col class="parameters_description">
+<col width="200px" class="parameters_annotations">
+</colgroup>
+<tbody>
+<tr>
+<td class="parameter_name"><p>self</p></td>
+<td class="parameter_description"><p>Repo</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>additional_metadata</p></td>
+<td class="parameter_description"><p>A GVariant <code class="literal">a{sv}</code>, or <code class="literal">NULL</code>. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>options</p></td>
+<td class="parameter_description"><p>A GVariant <code class="literal">a{sv}</code> with an extensible set of flags. </p></td>
+<td class="parameter_annotations"><span class="annotation">[<a href="http://foldoc.org/nullable"><span class="acronym">nullable</span></a>]</span></td>
+</tr>
+<tr>
+<td class="parameter_name"><p>cancellable</p></td>
+<td class="parameter_description"><p>Cancellable</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+<tr>
+<td class="parameter_name"><p>error</p></td>
+<td class="parameter_description"><p>Error</p></td>
+<td class="parameter_annotations"> </td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<p class="since">Since: 2023.1</p>
+</div>
+<hr>
+<div class="refsect2">
 <a name="ostree-repo-regenerate-summary"></a><h3>ostree_repo_regenerate_summary ()</h3>
 <pre class="programlisting"><span class="returnvalue">gboolean</span>
 ostree_repo_regenerate_summary (<em class="parameter"><code><a class="link" href="ostree-OstreeRepo.html#OstreeRepo" title="OstreeRepo"><span class="type">OstreeRepo</span></a> *self</code></em>,
@@ -9685,14 +9851,16 @@ possible modes.</p>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-MODE-BARE:CAPS"></a>OSTREE_REPO_MODE_BARE</p></td>
 <td class="enum_member_description">
-<p>Files are stored as themselves; checkouts are hardlinks; can only be written as root</p>
+<p>Files are stored as themselves; checkouts are hardlinks; can only be
+written as root</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-MODE-ARCHIVE:CAPS"></a>OSTREE_REPO_MODE_ARCHIVE</p></td>
 <td class="enum_member_description">
-<p>Files are compressed, should be owned by non-root.  Can be served via HTTP.  Since: 2017.12</p>
+<p>Files are compressed, should be owned by non-root.  Can be served via
+HTTP.  Since: 2017.12</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -9706,21 +9874,24 @@ possible modes.</p>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-MODE-BARE-USER:CAPS"></a>OSTREE_REPO_MODE_BARE_USER</p></td>
 <td class="enum_member_description">
-<p>Files are stored as themselves, except ownership; can be written by user. Hardlinks work only in user checkouts.</p>
+<p>Files are stored as themselves, except ownership; can be written by
+user. Hardlinks work only in user checkouts.</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-MODE-BARE-USER-ONLY:CAPS"></a>OSTREE_REPO_MODE_BARE_USER_ONLY</p></td>
 <td class="enum_member_description">
-<p>Same as BARE_USER, but all metadata is not stored, so it can only be used for user checkouts. Does not need xattrs.</p>
+<p>Same as BARE_USER, but all metadata is not stored, so it can
+only be used for user checkouts. Does not need xattrs.</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-MODE-BARE-SPLIT-XATTRS:CAPS"></a>OSTREE_REPO_MODE_BARE_SPLIT_XATTRS</p></td>
 <td class="enum_member_description">
-<p>Same as BARE_USER, but xattrs are stored separately from file content, with dedicated object types.</p>
+<p>Same as BARE_USER, but xattrs are stored separately from
+file content, with dedicated object types.</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -9804,7 +9975,8 @@ possible modes.</p>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-REMOTE-CHANGE-DELETE-IF-EXISTS:CAPS"></a>OSTREE_REPO_REMOTE_CHANGE_DELETE_IF_EXISTS</p></td>
 <td class="enum_member_description">
-<p>Delete a remote, do nothing if the remote does not exist</p>
+<p>Delete a remote, do nothing if the remote does not
+exist</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -9830,7 +10002,7 @@ possible modes.</p>
   guint64 content_bytes_written;
   guint devino_cache_hits;
 
-  guint   padding1;
+  guint padding1;
   guint64 padding2;
   guint64 padding3;
   guint64 padding4;
@@ -10063,9 +10235,10 @@ local copy of the commit, due to an fsck --delete. (Since: 2019.4.)</p>
 <hr>
 <div class="refsect2">
 <a name="OstreeRepoCommitModifierFlags"></a><h3>enum OstreeRepoCommitModifierFlags</h3>
-<p>Flags modifying commit behavior. In bare-user-only mode, <em class="parameter"><code>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_CANONICAL_PERMISSIONS</code></em>
-
-and <em class="parameter"><code>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS</code></em>
+<p>Flags modifying commit behavior. In bare-user-only mode,
+<em class="parameter"><code>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_CANONICAL_PERMISSIONS</code></em>
+ and
+<em class="parameter"><code>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS</code></em>
  are automatically enabled.</p>
 <div class="refsect3">
 <a name="OstreeRepoCommitModifierFlags.members"></a><h4>Members</h4>
@@ -10107,62 +10280,38 @@ and <em class="parameter"><code>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SKIP_XATTRS</c
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-COMMIT-MODIFIER-FLAGS-ERROR-ON-UNLABELED:CAPS"></a>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_ERROR_ON_UNLABELED</p></td>
 <td class="enum_member_description">
-<p>Emit an error if configured SELinux policy does not provide a label</p>
+<p>Emit an error if configured SELinux
+policy does not provide a label</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-COMMIT-MODIFIER-FLAGS-CONSUME:CAPS"></a>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_CONSUME</p></td>
 <td class="enum_member_description">
-<p>Delete added files/directories after commit; Since: 2017.13</p>
+<p>Delete added files/directories after commit; Since:
+2017.13</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-COMMIT-MODIFIER-FLAGS-DEVINO-CANONICAL:CAPS"></a>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_DEVINO_CANONICAL</p></td>
 <td class="enum_member_description">
-<p>If a devino cache hit is found, skip modifier filters (non-directories only); Since: 2017.14</p>
+<p>If a devino cache hit is found, skip
+modifier filters (non-directories only); Since: 2017.14</p>
+</td>
+<td class="enum_member_annotations"> </td>
+</tr>
+<tr>
+<td class="enum_member_name"><p><a name="OSTREE-REPO-COMMIT-MODIFIER-FLAGS-SELINUX-LABEL-V1:CAPS"></a>OSTREE_REPO_COMMIT_MODIFIER_FLAGS_SELINUX_LABEL_V1</p></td>
+<td class="enum_member_description">
+<p>For SELinux and other systems, label
+/usr/etc as if it was /etc.</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 </tbody>
 </table></div>
 </div>
-</div>
-<hr>
-<div class="refsect2">
-<a name="OstreeRepoCheckoutAtOptions"></a><h3>OstreeRepoCheckoutAtOptions</h3>
-<pre class="programlisting">typedef struct {
-  OstreeRepoCheckoutMode mode;
-  OstreeRepoCheckoutOverwriteMode overwrite_mode;
-
-  gboolean enable_uncompressed_cache;  /* Deprecated */
-  gboolean enable_fsync;  /* Deprecated */
-  gboolean process_whiteouts;
-  gboolean no_copy_fallback;
-  gboolean force_copy; /* Since: 2017.6 */
-  gboolean bareuseronly_dirs; /* Since: 2017.7 */
-  gboolean force_copy_zerosized; /* Since: 2018.9 */
-  gboolean unused_bools[4];
-  /* 4 byte hole on 64 bit */
-
-  const char *subpath;
-
-  OstreeRepoDevInoCache *devino_to_csum_cache;
-
-  int unused_ints[6];
-  gpointer unused_ptrs[3];
-  OstreeRepoCheckoutFilter filter; /* Since: 2018.2 */
-  gpointer filter_user_data; /* Since: 2018.2 */
-  OstreeSePolicy *sepolicy; /* Since: 2017.6 */
-  const char *sepolicy_prefix;
-} OstreeRepoCheckoutAtOptions;
-</pre>
-<p>An extensible options structure controlling checkout.  Ensure that
-you have entirely zeroed the structure, then set just the desired
-options.  This is used by <a class="link" href="ostree-OstreeRepo.html#ostree-repo-checkout-at" title="ostree_repo_checkout_at ()"><code class="function">ostree_repo_checkout_at()</code></a> which
-supercedes previous separate enumeration usage in
-<a class="link" href="ostree-OstreeRepo.html#ostree-repo-checkout-tree" title="ostree_repo_checkout_tree ()"><code class="function">ostree_repo_checkout_tree()</code></a> and <a class="link" href="ostree-OstreeRepo.html#ostree-repo-checkout-tree-at" title="ostree_repo_checkout_tree_at ()"><code class="function">ostree_repo_checkout_tree_at()</code></a>.</p>
 </div>
 <hr>
 <div class="refsect2">
@@ -10216,7 +10365,9 @@ supercedes previous separate enumeration usage in
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-CHECKOUT-OVERWRITE-UNION-FILES:CAPS"></a>OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_FILES</p></td>
 <td class="enum_member_description">
-<p>When layering checkouts, <code class="function">unlink()</code> and replace existing files, but do not modify existing directories (unless whiteouts are enabled, then directories are replaced)</p>
+<p>When layering checkouts, <code class="function">unlink()</code> and replace
+existing files, but do not modify existing directories (unless whiteouts are enabled, then
+directories are replaced)</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -10230,7 +10381,8 @@ supercedes previous separate enumeration usage in
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-CHECKOUT-OVERWRITE-UNION-IDENTICAL:CAPS"></a>OSTREE_REPO_CHECKOUT_OVERWRITE_UNION_IDENTICAL</p></td>
 <td class="enum_member_description">
-<p>Like UNION_FILES, but error if files are not identical (requires hardlink checkouts)</p>
+<p>Like UNION_FILES, but error if files are not
+identical (requires hardlink checkouts)</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -10343,7 +10495,8 @@ as - List of pack file checksums in which this object appears</p>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-COMMIT-TRAVERSE-FLAG-COMMIT-ONLY:CAPS"></a>OSTREE_REPO_COMMIT_TRAVERSE_FLAG_COMMIT_ONLY</p></td>
 <td class="enum_member_description">
-<p>Traverse and retrieve only commit objects.  (Since: 2022.2)</p>
+<p>Traverse and retrieve only commit objects.
+(Since: 2022.2)</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -10416,7 +10569,8 @@ as - List of pack file checksums in which this object appears</p>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-PRUNE-FLAGS-REFS-ONLY:CAPS"></a>OSTREE_REPO_PRUNE_FLAGS_REFS_ONLY</p></td>
 <td class="enum_member_description">
-<p>Do not traverse individual commit objects, only follow refs</p>
+<p>Do not traverse individual commit objects, only follow refs
+for reachability calculations</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -10453,7 +10607,8 @@ as - List of pack file checksums in which this object appears</p>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-PULL-FLAGS-MIRROR:CAPS"></a>OSTREE_REPO_PULL_FLAGS_MIRROR</p></td>
 <td class="enum_member_description">
-<p>Write out refs suitable for mirrors and fetch all refs if none requested</p>
+<p>Write out refs suitable for mirrors and fetch all refs if none
+requested</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
@@ -10467,21 +10622,24 @@ as - List of pack file checksums in which this object appears</p>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-PULL-FLAGS-UNTRUSTED:CAPS"></a>OSTREE_REPO_PULL_FLAGS_UNTRUSTED</p></td>
 <td class="enum_member_description">
-<p>Do verify checksums of local (filesystem-accessible) repositories (defaults on for HTTP)</p>
+<p>Do verify checksums of local (filesystem-accessible)
+repositories (defaults on for HTTP)</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-PULL-FLAGS-BAREUSERONLY-FILES:CAPS"></a>OSTREE_REPO_PULL_FLAGS_BAREUSERONLY_FILES</p></td>
 <td class="enum_member_description">
-<p>Since 2017.7.  Reject writes of content objects with modes outside of 0775.</p>
+<p>Since 2017.7.  Reject writes of content objects with
+modes outside of 0775.</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>
 <tr>
 <td class="enum_member_name"><p><a name="OSTREE-REPO-PULL-FLAGS-TRUSTED-HTTP:CAPS"></a>OSTREE_REPO_PULL_FLAGS_TRUSTED_HTTP</p></td>
 <td class="enum_member_description">
-<p>Don't verify checksums of objects HTTP repositories (Since: 2017.12)</p>
+<p>Don't verify checksums of objects HTTP repositories
+(Since: 2017.12)</p>
 </td>
 <td class="enum_member_annotations"> </td>
 </tr>

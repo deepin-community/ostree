@@ -426,6 +426,7 @@ ostree_repo_write_commit
 ostree_repo_write_commit_with_time
 ostree_repo_read_commit_detached_metadata
 ostree_repo_write_commit_detached_metadata
+ostree_repo_commit_add_composefs_metadata
 OstreeRepoCheckoutAtOptions
 ostree_repo_checkout_at_options_set_devino
 OstreeRepoCheckoutMode
@@ -483,6 +484,7 @@ ostree_repo_verify_commit
 ostree_repo_verify_commit_ext
 ostree_repo_verify_commit_for_remote
 ostree_repo_verify_summary
+ostree_repo_regenerate_metadata
 ostree_repo_regenerate_summary
 <SUBSECTION Standard>
 OSTREE_REPO
@@ -548,6 +550,7 @@ OstreeSysroot
 ostree_sysroot_new
 ostree_sysroot_new_default
 ostree_sysroot_initialize
+ostree_sysroot_initialize_with_mount_namespace
 ostree_sysroot_get_path
 ostree_sysroot_load
 ostree_sysroot_load_if_changed
@@ -577,6 +580,7 @@ ostree_sysroot_get_repo
 ostree_sysroot_get_staged_deployment
 ostree_sysroot_init_osname
 ostree_sysroot_deployment_set_kargs
+ostree_sysroot_deployment_set_kargs_in_place
 ostree_sysroot_deployment_set_mutable
 ostree_sysroot_deployment_unlock
 ostree_sysroot_deployment_set_pinned
@@ -727,6 +731,7 @@ ostree_kernel_args_replace_argv
 ostree_kernel_args_append
 ostree_kernel_args_append_argv
 ostree_kernel_args_append_argv_filtered
+ostree_kernel_args_append_if_missing
 ostree_kernel_args_new_replace
 ostree_kernel_args_delete
 ostree_kernel_args_delete_key_entry
@@ -736,6 +741,8 @@ ostree_kernel_args_get_last_value
 ostree_kernel_args_from_string
 ostree_kernel_args_to_strv
 ostree_kernel_args_to_string
+ostree_kernel_args_contains
+ostree_kernel_args_delete_if_present
 </SECTION>
 
 <SECTION>

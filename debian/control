@@ -1,8 +1,8 @@
 Source: ostree
 Section: admin
 Priority: optional
-Maintainer: Deepin Developer <deepin-dev@deepin.org>
-Uploaders: Deepin Packages Builder <packages@deepin.org>
+Maintainer: Utopia Maintenance Team <pkg-utopia-maintainers@lists.alioth.debian.org>
+Uploaders:
  Matthias Klumpp <mak@debian.org>,
  Simon McVittie <smcv@debian.org>,
  Sjoerd Simons <sjoerd@debian.org>
@@ -11,34 +11,37 @@ Build-Depends:
  autoconf,
  automake,
  bison,
- bsdextrautils <!nocheck> | bsdmainutils (<< 12) <!nocheck>,
+ bsdextrautils <!nocheck>,
  ca-certificates,
  cpio,
+ debhelper (>= 13.11.6~),
  debhelper-compat (= 13),
  docbook-xml <!nodoc>,
  docbook-xsl <!nodoc>,
- e2fslibs-dev,
+ libext2fs-dev,
  elfutils,
  fuse3,
- gjs [!alpha !hppa !ia64 !m68k !s390x !sh4 !sparc64 !x32 !sw64],
+ gjs [!alpha !hppa !ia64 !m68k !sh4 !sparc64 !x32],
  gnupg <!nocheck>,
  gobject-introspection,
  gtk-doc-tools <!nodoc>,
  libarchive-dev,
  libattr1-dev,
- libavahi-client-dev (>= 0.6.31),
- libavahi-glib-dev (>= 0.6.31),
+ libavahi-client-dev,
+ libavahi-glib-dev,
  libcap-dev,
+ libcurl4-gnutls-dev | libcurl-dev,
  libfuse3-dev,
  libgirepository1.0-dev,
- libglib2.0-dev (>= 2.66.0),
+ libglib2.0-dev,
  libgpgme-dev,
  liblzma-dev,
- libmount-dev (>= 2.23),
+ libmount-dev,
  libselinux1-dev,
- libsoup2.4-dev (>= 2.39.1),
+ libsoup-3.0-dev (>= 3.0.0),
  libsystemd-dev,
  libtool,
+ pkgconf,
  procps,
  python3 <!nocheck>,
  python3-yaml <!nocheck>,
@@ -47,10 +50,10 @@ Build-Depends:
 Build-Depends-Indep:
  libglib2.0-doc,
 Rules-Requires-Root: no
-Standards-Version: 4.6.0
+Standards-Version: 4.6.2
 Homepage: https://github.com/ostreedev/ostree/
-#Vcs-Git
-#Vcs-Browser
+Vcs-Git: https://salsa.debian.org/debian/ostree.git
+Vcs-Browser: https://salsa.debian.org/debian/ostree
 
 Package: gir1.2-ostree-1.0
 Architecture: linux-any
@@ -75,8 +78,6 @@ Depends:
  ${shlibs:Depends},
 Pre-Depends:
  ${misc:Pre-Depends},
-Breaks:
- flatpak (<< 0.8.7-2~),
 Multi-Arch: same
 Description: content-addressed filesystem for operating system binaries (library)
  libostree is a library for managing bootable, immutable, versioned
@@ -96,12 +97,14 @@ Multi-Arch: same
 Section: libdevel
 Depends:
  gir1.2-ostree-1.0 (= ${binary:Version}),
- libglib2.0-dev (>= 2.66.0),
+ libglib2.0-dev,
  libostree-1-1 (= ${binary:Version}),
- pkg-config,
+ pkgconf,
  ${misc:Depends},
 Suggests:
  libostree-doc,
+Provides:
+ gir1.2-ostree-1.0-dev (= ${binary:Version}),
 Description: Development files for the libostree library
  libostree is a library for managing bootable, immutable, versioned
  filesystem trees. It is like git in that it checksums individual files
@@ -185,12 +188,12 @@ Package: ostree-tests
 Architecture: linux-any
 Depends:
  attr,
- bsdextrautils | bsdmainutils (<< 12),
+ bsdextrautils,
  ca-certificates,
  cpio,
  fuse3,
  gir1.2-ostree-1.0,
- gjs [!alpha !hppa !ia64 !m68k !sh4 !sparc64 !x32 !sw64],
+ gjs [!alpha !hppa !ia64 !m68k !sh4 !sparc64 !x32],
  gnupg,
  ostree,
  python3,

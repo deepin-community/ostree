@@ -25,12 +25,16 @@ else
   test_srcdir=$(dirname $0)
 fi
 
-if [ -n "${G_TEST_BUILDDIR:-}" ]; then
-  test_builddir="${G_TEST_BUILDDIR}/tests"
-else
-  test_builddir=$(dirname $0)
+top_builddir="${G_TEST_BUILDDIR:-}"
+if test -z "${top_builddir}"; then
+    top_builddir=$(cd $(dirname $0)/.. && pwd)
 fi
+
+test_builddir="${top_builddir}/tests"
 . ${test_srcdir}/libtest-core.sh
+
+# Make sure /sbin/capsh etc. are in our PATH even if non-root
+PATH="$PATH:/usr/sbin:/sbin"
 
 # Array of expressions to execute when exiting. Each expression should
 # be a single string (quoting if necessary) that will be eval'd. To add
@@ -148,6 +152,20 @@ if ! have_selinux_relabel; then
 fi
 echo done
 
+# whiteout char 0:0 devices can be created as regular users, but
+# cannot be created inside containers mounted via overlayfs
+can_create_whiteout_devices() {
+    mknod -m 000 ${test_tmpdir}/.test-whiteout c 0 0 || return 1
+    rm -f ${test_tmpdir}/.test-whiteout
+    return 0
+}
+
+echo -n checking for overlayfs whiteouts...
+if ! can_create_whiteout_devices; then
+    export OSTREE_NO_WHITEOUTS=1
+fi
+echo done
+
 if test -n "${OT_TESTS_DEBUG:-}"; then
     set -x
 fi
@@ -158,30 +176,15 @@ if test -n "${ASAN_OPTIONS:-}"; then
     BUILT_WITH_ASAN=1
 fi
 
+CMD_PREFIX=""
 if test -n "${OT_TESTS_VALGRIND:-}"; then
     CMD_PREFIX="env G_SLICE=always-malloc OSTREE_SUPPRESS_SYNCFS=1 valgrind -q --error-exitcode=1 --leak-check=full --num-callers=30 --suppressions=${test_srcdir}/glib.supp --suppressions=${test_srcdir}/ostree.supp"
-else
-    # In some cases the LD_PRELOAD may cause obscure problems,
-    # e.g. right now it breaks for me with -fsanitize=address, so
-    # let's allow users to skip it.
-    if test -z "${OT_SKIP_READDIR_RAND:-}" && test -z "${BUILT_WITH_ASAN:-}"; then
-	CMD_PREFIX="env LD_PRELOAD=${test_builddir}/libreaddir-rand.so"
-    else
-	CMD_PREFIX=""
-    fi
 fi
 
-if test -n "${OSTREE_UNINSTALLED:-}"; then
-    OSTREE_HTTPD=${OSTREE_UNINSTALLED}/ostree-trivial-httpd
-else
-    # trivial-httpd is now in $libexecdir by default, which we don't
-    # know at this point. Fortunately, libtest.sh is also in
-    # $libexecdir, so make an educated guess. If it's not found, assume
-    # it's still runnable as "ostree trivial-httpd".
-    if [ -x "${test_srcdir}/../../libostree/ostree-trivial-httpd" ]; then
-        OSTREE_HTTPD="${CMD_PREFIX} ${test_srcdir}/../../libostree/ostree-trivial-httpd"
-    else
-        OSTREE_HTTPD="${CMD_PREFIX} ostree trivial-httpd"
+if test -z "${OSTREE_HTTPD:-}"; then
+    OSTREE_HTTPD="${top_builddir}/ostree-trivial-httpd"
+    if ! [ -x "${OSTREE_HTTPD}" ]; then
+        OSTREE_HTTPD=
     fi
 fi
 
@@ -245,6 +248,22 @@ setup_test_repository () {
     ln -s nonexistent baz/alink
     mkdir baz/another/
     echo x > baz/another/y
+
+    mkdir baz/sub1
+    echo SAME_CONTENT > baz/sub1/duplicate_a
+    echo SAME_CONTENT > baz/sub1/duplicate_b
+
+    mkdir baz/sub2
+    echo SAME_CONTENT > baz/sub2/duplicate_c
+
+    # if we are running inside a container we cannot test
+    # the overlayfs whiteout marker passthrough
+    if ! test -n "${OSTREE_NO_WHITEOUTS:-}"; then
+        mkdir whiteouts
+        touch whiteouts/.ostree-wh.whiteout
+        touch whiteouts/.ostree-wh.whiteout2
+        chmod 755 whiteouts/.ostree-wh.whiteout2
+    fi
     umask "${oldumask}"
 
     cd ${test_tmpdir}/files
@@ -406,7 +425,7 @@ setup_os_repository () {
     mkdir osdata
     cd osdata
     kver=3.6.0
-    mkdir -p usr/bin ${bootdir} usr/lib/modules/${kver} usr/share usr/etc
+    mkdir -p usr/bin ${bootdir} usr/lib/modules/${kver} usr/share usr/etc usr/container/layers/abcd
     kernel_path=${bootdir}/vmlinuz
     initramfs_path=${bootdir}/initramfs.img
     # the HMAC file is only in /usr/lib/modules
@@ -449,6 +468,17 @@ EOF
     mkdir -p usr/etc/testdirectory
     echo "a default daemon file" > usr/etc/testdirectory/test
 
+    # if we are running inside a container we cannot test
+    # the overlayfs whiteout marker passthrough
+    if ! test -n "${OSTREE_NO_WHITEOUTS:-}"; then
+        # overlayfs whiteout passhthrough marker files
+        touch usr/container/layers/abcd/.ostree-wh.whiteout
+        chmod 400 usr/container/layers/abcd/.ostree-wh.whiteout
+
+        touch usr/container/layers/abcd/.ostree-wh.whiteout2
+        chmod 777 usr/container/layers/abcd/.ostree-wh.whiteout2
+    fi
+
     ${CMD_PREFIX} ostree --repo=${test_tmpdir}/testos-repo commit ${bootable_flag} --add-metadata-string version=1.0.9 -b testos/buildmain/x86_64-runtime -s "Build"
 
     # Ensure these commits have distinct second timestamps
@@ -474,7 +504,7 @@ EOF
     if test -n "${OSTREE_NO_XATTRS:-}"; then
         echo -e 'disable-xattrs=true\n' >> sysroot/ostree/repo/config
     fi
-    ${CMD_PREFIX} ostree admin os-init testos
+    ${CMD_PREFIX} ostree admin stateroot-init testos
 
     case $bootmode in
         "syslinux")
@@ -585,6 +615,28 @@ skip_one_without_user_xattrs () {
 skip_without_user_xattrs () {
     if ! have_user_xattrs; then
         skip "this test requires xattr support"
+    fi
+}
+
+skip_without_sudo () {
+    if test -z "${OSTREE_TEST_SUDO:-}"; then
+        skip "this test needs sudo, skipping without OSTREE_TEST_SUDO being set"
+    fi
+}
+
+# Usage: if ! skip_one_without_whiteouts_devices; then ... more tests ...; fi
+skip_one_without_whiteouts_devices() {
+    if ! can_create_whiteout_devices; then
+        echo "ok # SKIP - this test requires whiteout device support (test outside containers)"
+        return 0
+    else
+        return 1
+    fi
+}
+
+skip_without_whiteouts_devices () {
+    if ! can_create_whiteout_devices; then
+        skip "this test requires whiteout device support (test outside containers)"
     fi
 }
 

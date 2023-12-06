@@ -44,7 +44,7 @@ License along with this library. If not, see <https://www.gnu.org/licenses/>.
 
     <refnamediv>
         <refname>ostree-admin-os-init</refname>
-        <refpurpose>Initialize empty state for a given operating system</refpurpose>
+        <refpurpose>Soft-deprecated alias for stateroot-init</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
@@ -57,19 +57,7 @@ License along with this library. If not, see <https://www.gnu.org/licenses/>.
         <title>Description</title>
 
         <para>
-            Initializes an new stateroot (AKA "osname") for an operating system.
-            Ensures that the core subdirectories of /var (/tmp, /lib, /run, and
-            /lock) exist and initialize the given STATEROOT as OSTree stateroot.
-            Each deployment location is comprised of a single shared
-            <filename>var</filename> and a set of deployments (chroots).
+            This is a soft-deprecated alias for stateroot-init.  Please see the documentation for that.
         </para>
-    </refsect1>
-
-    <refsect1>
-        <title>Example</title>
-        <para><command>$ ostree admin os-init exampleos</command></para>
-    <programlisting>
-        ostree/deploy/exampleos initialized as OSTree root
-    </programlisting>
     </refsect1>
 </refentry>

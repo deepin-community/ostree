@@ -19,54 +19,50 @@
 
 #include "config.h"
 
-#include "ot-main.h"
+#include "ostree.h"
 #include "ot-admin-builtins.h"
 #include "ot-admin-functions.h"
-#include "ostree.h"
+#include "ot-main.h"
 #include "otutil.h"
 
-#include <glib/gi18n.h>
 #include <err.h>
+#include <glib/gi18n.h>
 
 static gboolean opt_hotfix;
 static gboolean opt_transient;
 
-static GOptionEntry options[] = {
-  { "hotfix", 0, 0, G_OPTION_ARG_NONE, &opt_hotfix, "Retain changes across reboots", NULL },
-  { "transient", 0, 0, G_OPTION_ARG_NONE, &opt_transient, "Mount overlayfs read-only by default", NULL },
-  { NULL }
-};
+static GOptionEntry options[]
+    = { { "hotfix", 0, 0, G_OPTION_ARG_NONE, &opt_hotfix, "Retain changes across reboots", NULL },
+        { "transient", 0, 0, G_OPTION_ARG_NONE, &opt_transient,
+          "Mount overlayfs read-only by default", NULL },
+        { NULL } };
 
 gboolean
-ot_admin_builtin_unlock (int argc, char **argv, OstreeCommandInvocation *invocation, GCancellable *cancellable, GError **error)
+ot_admin_builtin_unlock (int argc, char **argv, OstreeCommandInvocation *invocation,
+                         GCancellable *cancellable, GError **error)
 {
-  gboolean ret = FALSE;
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(OstreeSysroot) sysroot = NULL;
-  OstreeDeployment *booted_deployment = NULL;
-  OstreeDeploymentUnlockedState target_state;
+  g_autoptr (GOptionContext) context = g_option_context_new ("");
 
-  context = g_option_context_new ("");
-
+  g_autoptr (OstreeSysroot) sysroot = NULL;
   if (!ostree_admin_option_context_parse (context, options, &argc, &argv,
-                                          OSTREE_ADMIN_BUILTIN_FLAG_SUPERUSER,
-                                          invocation, &sysroot, cancellable, error))
-    goto out;
-  
+                                          OSTREE_ADMIN_BUILTIN_FLAG_SUPERUSER, invocation, &sysroot,
+                                          cancellable, error))
+    return FALSE;
+
   if (argc > 1)
     {
       ot_util_usage_error (context, "This command takes no extra arguments", error);
-      goto out;
+      return FALSE;
     }
 
-  booted_deployment = ostree_sysroot_require_booted_deployment (sysroot, error);
+  OstreeDeployment *booted_deployment = ostree_sysroot_require_booted_deployment (sysroot, error);
   if (!booted_deployment)
-    goto out;
+    return FALSE;
 
+  OstreeDeploymentUnlockedState target_state;
   if (opt_hotfix && opt_transient)
     {
-      glnx_throw (error, "Cannot specify both --hotfix and --transient");
-      goto out;
+      return glnx_throw (error, "Cannot specify both --hotfix and --transient");
     }
   else if (opt_hotfix)
     target_state = OSTREE_DEPLOYMENT_UNLOCKED_HOTFIX;
@@ -75,10 +71,10 @@ ot_admin_builtin_unlock (int argc, char **argv, OstreeCommandInvocation *invocat
   else
     target_state = OSTREE_DEPLOYMENT_UNLOCKED_DEVELOPMENT;
 
-  if (!ostree_sysroot_deployment_unlock (sysroot, booted_deployment,
-                                         target_state, cancellable, error))
-    goto out;
-  
+  if (!ostree_sysroot_deployment_unlock (sysroot, booted_deployment, target_state, cancellable,
+                                         error))
+    return FALSE;
+
   switch (target_state)
     {
     case OSTREE_DEPLOYMENT_UNLOCKED_NONE:
@@ -99,7 +95,5 @@ ot_admin_builtin_unlock (int argc, char **argv, OstreeCommandInvocation *invocat
       break;
     }
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }

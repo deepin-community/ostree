@@ -334,10 +334,6 @@
 </dt>
 <dd></dd>
 <dt>
-<a class="link" href="ostree-Core-repository-independent-functions.html#OstreeCommitSizesEntry" title="OstreeCommitSizesEntry">OstreeCommitSizesEntry</a>, struct in <a class="link" href="ostree-Core-repository-independent-functions.html" title="Core repository-independent functions">Core repository-independent functions</a>
-</dt>
-<dd></dd>
-<dt>
 <a class="link" href="ostree-Core-repository-independent-functions.html#ostree-commit-get-content-checksum" title="ostree_commit_get_content_checksum ()">ostree_commit_get_content_checksum</a>, function in <a class="link" href="ostree-Core-repository-independent-functions.html" title="Core repository-independent functions">Core repository-independent functions</a>
 </dt>
 <dd></dd>
@@ -615,6 +611,10 @@
 </dt>
 <dd></dd>
 <dt>
+<a class="link" href="ostree-ostree-kernel-args.html#ostree-kernel-args-append-if-missing" title="ostree_kernel_args_append_if_missing ()">ostree_kernel_args_append_if_missing</a>, function in <a class="link" href="ostree-ostree-kernel-args.html" title="ostree-kernel-args">ostree-kernel-args</a>
+</dt>
+<dd></dd>
+<dt>
 <a class="link" href="ostree-ostree-kernel-args.html#ostree-kernel-args-append-proc-cmdline" title="ostree_kernel_args_append_proc_cmdline ()">ostree_kernel_args_append_proc_cmdline</a>, function in <a class="link" href="ostree-ostree-kernel-args.html" title="ostree-kernel-args">ostree-kernel-args</a>
 </dt>
 <dd></dd>
@@ -623,7 +623,15 @@
 </dt>
 <dd></dd>
 <dt>
+<a class="link" href="ostree-ostree-kernel-args.html#ostree-kernel-args-contains" title="ostree_kernel_args_contains ()">ostree_kernel_args_contains</a>, function in <a class="link" href="ostree-ostree-kernel-args.html" title="ostree-kernel-args">ostree-kernel-args</a>
+</dt>
+<dd></dd>
+<dt>
 <a class="link" href="ostree-ostree-kernel-args.html#ostree-kernel-args-delete" title="ostree_kernel_args_delete ()">ostree_kernel_args_delete</a>, function in <a class="link" href="ostree-ostree-kernel-args.html" title="ostree-kernel-args">ostree-kernel-args</a>
+</dt>
+<dd></dd>
+<dt>
+<a class="link" href="ostree-ostree-kernel-args.html#ostree-kernel-args-delete-if-present" title="ostree_kernel_args_delete_if_present ()">ostree_kernel_args_delete_if_present</a>, function in <a class="link" href="ostree-ostree-kernel-args.html" title="ostree-kernel-args">ostree-kernel-args</a>
 </dt>
 <dd></dd>
 <dt>
@@ -851,10 +859,6 @@
 </dt>
 <dd></dd>
 <dt>
-<a class="link" href="ostree-OstreeRepo.html#OstreeRepoCheckoutAtOptions" title="OstreeRepoCheckoutAtOptions">OstreeRepoCheckoutAtOptions</a>, struct in <a class="link" href="ostree-OstreeRepo.html" title="OstreeRepo: Content-addressed object store">OstreeRepo</a>
-</dt>
-<dd></dd>
-<dt>
 <a class="link" href="ostree-OstreeRepo.html#OstreeRepoCheckoutMode" title="enum OstreeRepoCheckoutMode">OstreeRepoCheckoutMode</a>, enum in <a class="link" href="ostree-OstreeRepo.html" title="OstreeRepo: Content-addressed object store">OstreeRepo</a>
 </dt>
 <dd></dd>
@@ -996,6 +1000,10 @@ OstreeRepoFinderOverride, struct in OstreeRepoFinderOverride
 <dd></dd>
 <dt>
 <a class="link" href="ostree-OstreeRepo.html#ostree-repo-checkout-tree-at" title="ostree_repo_checkout_tree_at ()">ostree_repo_checkout_tree_at</a>, function in <a class="link" href="ostree-OstreeRepo.html" title="OstreeRepo: Content-addressed object store">OstreeRepo</a>
+</dt>
+<dd></dd>
+<dt>
+<a class="link" href="ostree-OstreeRepo.html#ostree-repo-commit-add-composefs-metadata" title="ostree_repo_commit_add_composefs_metadata ()">ostree_repo_commit_add_composefs_metadata</a>, function in <a class="link" href="ostree-OstreeRepo.html" title="OstreeRepo: Content-addressed object store">OstreeRepo</a>
 </dt>
 <dd></dd>
 <dt>
@@ -1144,6 +1152,34 @@ OstreeRepoFinderOverride, struct in OstreeRepoFinderOverride
 <dd></dd>
 <dt>
 <a class="link" href="ostree-ostree-repo-file.html#ostree-repo-file-tree-set-metadata" title="ostree_repo_file_tree_set_metadata ()">ostree_repo_file_tree_set_metadata</a>, function in <a class="link" href="ostree-ostree-repo-file.html" title="ostree-repo-file">ostree-repo-file</a>
+</dt>
+<dd></dd>
+<dt>
+ostree_repo_finder_avahi_new, function in OstreeRepoFinderAvahi
+</dt>
+<dd></dd>
+<dt>
+ostree_repo_finder_avahi_start, function in OstreeRepoFinderAvahi
+</dt>
+<dd></dd>
+<dt>
+ostree_repo_finder_avahi_stop, function in OstreeRepoFinderAvahi
+</dt>
+<dd></dd>
+<dt>
+ostree_repo_finder_config_new, function in OstreeRepoFinderConfig
+</dt>
+<dd></dd>
+<dt>
+ostree_repo_finder_mount_new, function in OstreeRepoFinderMount
+</dt>
+<dd></dd>
+<dt>
+ostree_repo_finder_override_add_uri, function in OstreeRepoFinderOverride
+</dt>
+<dd></dd>
+<dt>
+ostree_repo_finder_override_new, function in OstreeRepoFinderOverride
 </dt>
 <dd></dd>
 <dt>
@@ -1428,6 +1464,10 @@ OstreeRepoFinderOverride, struct in OstreeRepoFinderOverride
 <dd></dd>
 <dt>
 <a class="link" href="ostree-OstreeRepo.html#ostree-repo-read-commit-detached-metadata" title="ostree_repo_read_commit_detached_metadata ()">ostree_repo_read_commit_detached_metadata</a>, function in <a class="link" href="ostree-OstreeRepo.html" title="OstreeRepo: Content-addressed object store">OstreeRepo</a>
+</dt>
+<dd></dd>
+<dt>
+<a class="link" href="ostree-OstreeRepo.html#ostree-repo-regenerate-metadata" title="ostree_repo_regenerate_metadata ()">ostree_repo_regenerate_metadata</a>, function in <a class="link" href="ostree-OstreeRepo.html" title="OstreeRepo: Content-addressed object store">OstreeRepo</a>
 </dt>
 <dd></dd>
 <dt>
@@ -1868,6 +1908,10 @@ OstreeRepoFinderOverride, struct in OstreeRepoFinderOverride
 </dt>
 <dd></dd>
 <dt>
+<a class="link" href="ostree-Root-partition-mount-point.html#ostree-sysroot-deployment-set-kargs-in-place" title="ostree_sysroot_deployment_set_kargs_in_place ()">ostree_sysroot_deployment_set_kargs_in_place</a>, function in <a class="link" href="ostree-Root-partition-mount-point.html" title="Root partition mount point">Root partition mount point</a>
+</dt>
+<dd></dd>
+<dt>
 <a class="link" href="ostree-Root-partition-mount-point.html#ostree-sysroot-deployment-set-mutable" title="ostree_sysroot_deployment_set_mutable ()">ostree_sysroot_deployment_set_mutable</a>, function in <a class="link" href="ostree-Root-partition-mount-point.html" title="Root partition mount point">Root partition mount point</a>
 </dt>
 <dd></dd>
@@ -1941,6 +1985,10 @@ OstreeRepoFinderOverride, struct in OstreeRepoFinderOverride
 <dd></dd>
 <dt>
 <a class="link" href="ostree-Root-partition-mount-point.html#ostree-sysroot-initialize" title="ostree_sysroot_initialize ()">ostree_sysroot_initialize</a>, function in <a class="link" href="ostree-Root-partition-mount-point.html" title="Root partition mount point">Root partition mount point</a>
+</dt>
+<dd></dd>
+<dt>
+<a class="link" href="ostree-Root-partition-mount-point.html#ostree-sysroot-initialize-with-mount-namespace" title="ostree_sysroot_initialize_with_mount_namespace ()">ostree_sysroot_initialize_with_mount_namespace</a>, function in <a class="link" href="ostree-Root-partition-mount-point.html" title="Root partition mount point">Root partition mount point</a>
 </dt>
 <dd></dd>
 <dt>

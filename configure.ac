@@ -1,7 +1,7 @@
 AC_PREREQ([2.63])
 dnl To perform a release, follow the instructions in `docs/CONTRIBUTING.md`.
-m4_define([year_version], [2022])
-m4_define([release_version], [4])
+m4_define([year_version], [2023])
+m4_define([release_version], [7])
 m4_define([package_version], [year_version.release_version])
 AC_INIT([libostree], [package_version], [walters@verbum.org])
 is_release_build=yes
@@ -82,7 +82,10 @@ AM_COND_IF([BUILDOPT_TSAN],
 LT_PREREQ([2.2.4])
 LT_INIT([disable-static])
 
-OSTREE_FEATURES=""
+dnl We have an always-on feature now to signify the fix for 
+dnl https://github.com/ostreedev/ostree/pull/2874/commits/de6fddc6adee09a93901243dc7074090828a1912
+dnl "commit: fix ostree deployment on 64-bit inode fs"
+OSTREE_FEATURES="inode64"
 AC_SUBST([OSTREE_FEATURES])
 
 GLIB_TESTS
@@ -149,6 +152,21 @@ AS_IF([test x$enable_http2 != xno ], [
   OSTREE_FEATURES="$OSTREE_FEATURES no-http2"
 ])
 
+SOUP3_DEPENDENCY="libsoup-3.0 >= 3.0.0"
+AC_ARG_WITH(soup3,
+	    AS_HELP_STRING([--with-soup3], [Use libsoup3 @<:@default=no@:>@]),
+	    [], [with_soup3=no])
+AS_IF([test x$with_soup3 != xno], [
+    PKG_CHECK_MODULES(OT_DEP_SOUP3, $SOUP3_DEPENDENCY)
+    with_soup3=yes
+    AC_DEFINE([HAVE_LIBSOUP3], 1, [Define if we have libsoup3])
+    OSTREE_FEATURES="$OSTREE_FEATURES libsoup3"
+    with_soup_default=no
+    dnl soup3 always supports client certs
+    have_libsoup_client_certs=yes
+], [with_soup_default=check])
+AM_CONDITIONAL(USE_LIBSOUP3, test x$with_soup3 != xno)
+
 dnl When bumping the libsoup-2.4 dependency, remember to bump
 dnl SOUP_VERSION_MIN_REQUIRED and SOUP_VERSION_MAX_ALLOWED in
 dnl Makefile.am
@@ -180,7 +198,7 @@ AS_IF([test x$with_soup != xno], [
         ], [], [#include <libsoup/soup.h>])
     AS_IF([test x$enable_libsoup_client_certs = xyes && test x$have_libsoup_client_certs != xyes], [
       AC_MSG_ERROR([libsoup client certs explicitly requested but not found])
-    ]) 
+    ])
     CFLAGS=$save_CFLAGS
   ], [
     with_soup=no
@@ -190,39 +208,47 @@ if test x$with_soup != xno; then OSTREE_FEATURES="$OSTREE_FEATURES libsoup"; fi
 AM_CONDITIONAL(USE_LIBSOUP, test x$with_soup != xno)
 AM_CONDITIONAL(HAVE_LIBSOUP_CLIENT_CERTS, test x$have_libsoup_client_certs = xyes)
 
-AC_ARG_ENABLE(trivial-httpd-cmdline,
-  [AS_HELP_STRING([--enable-trivial-httpd-cmdline],
-  [Continue to support "ostree trivial-httpd" [default=no]])],,
-  enable_trivial_httpd_cmdline=no)
-AS_IF([test x$enable_trivial_httpd_cmdline = xyes],
-  [AC_DEFINE([BUILDOPT_ENABLE_TRIVIAL_HTTPD_CMDLINE], 1, [Define if we are enabling ostree trivial-httpd entrypoint])]
-)
+dnl Some components use either soup2 or soup3.
+AM_CONDITIONAL([USE_LIBSOUP_OR_LIBSOUP3],
+               [test x$with_soup = xyes || test x$with_soup3 = xyes])
+AS_IF([test x$with_soup = xyes || test x$with_soup3 = xyes], [
+  AC_DEFINE([HAVE_LIBSOUP_OR_LIBSOUP3], 1, [Define if we have libsoup.pc or libsoup3.pc])
+])
 
-AS_IF([test x$with_curl = xyes && test x$with_soup = xno], [
+AS_IF([test x$with_curl = xyes && test x$with_soup = xno && test x$with_soup3 = xno], [
   AC_MSG_WARN([Curl enabled, but libsoup is not; libsoup is needed for tests (make check, etc.)])
 ])
-AM_CONDITIONAL(USE_CURL_OR_SOUP, test x$with_curl != xno || test x$with_soup != xno)
-AS_IF([test x$with_curl != xno || test x$with_soup != xno],
+AM_CONDITIONAL(USE_CURL_OR_SOUP, test x$with_curl != xno || test x$with_soup != xno || test x$with_soup3 != xno)
+AS_IF([test x$with_curl != xno || test x$with_soup != xno || test x$with_soup3 != xno],
             [AC_DEFINE([HAVE_LIBCURL_OR_LIBSOUP], 1, [Define if we have soup or curl])])
-AS_IF([test x$with_curl = xyes], [fetcher_backend=curl], [test x$with_soup = xyes], [fetcher_backend=libsoup], [fetcher_backend=none])
+AS_IF([test x$with_curl = xyes], [fetcher_backend=curl],
+      [test x$with_soup = xyes], [fetcher_backend=libsoup],
+      [test x$with_soup3 = xyes], [fetcher_backend=libsoup3],
+      [fetcher_backend=none])
 
 m4_ifdef([GOBJECT_INTROSPECTION_CHECK], [
-  GOBJECT_INTROSPECTION_CHECK([1.34.0])
+  GOBJECT_INTROSPECTION_CHECK([1.51.5])
 ])
 AM_CONDITIONAL(BUILDOPT_INTROSPECTION, test "x$found_introspection" = xyes)
 
-LIBGPGME_DEPENDENCY="1.1.8"
+LIBGPGME_DEPENDENCY="1.8.0"
+LIBGPGME_PTHREAD_DEPENDENCY="1.1.8"
 AC_ARG_WITH(gpgme,
 	    AS_HELP_STRING([--with-gpgme], [Use gpgme @<:@default=yes@:>@]),
 	    [], [with_gpgme=yes])
 AS_IF([test x$with_gpgme != xno], [
-    PKG_CHECK_MODULES(OT_DEP_GPGME, gpgme-pthread >= $LIBGPGME_DEPENDENCY, have_gpgme=yes, [
+    have_gpgme=yes
+    PKG_CHECK_MODULES([OT_DEP_GPGME], [gpgme >= $LIBGPGME_DEPENDENCY gpg-error], [have_gpgme=yes], [have_gpgme=no])
+    ]
+)
+AS_IF([test x$with_gpgme != xno && test x$have_gpgme != xyes], [
+    PKG_CHECK_MODULES(OT_DEP_GPGME, gpgme-pthread >= $LIBGPGME_PTHREAD_DEPENDENCY, have_gpgme=yes, [
         m4_ifdef([AM_PATH_GPGME_PTHREAD], [
-            AM_PATH_GPGME_PTHREAD($LIBGPGME_DEPENDENCY, have_gpgme=yes, have_gpgme=no)
+            AM_PATH_GPGME_PTHREAD($LIBGPGME_PTHREAD_DEPENDENCY, have_gpgme=yes, have_gpgme=no)
         ],[ have_gpgme=no ])
     ])
     AS_IF([ test x$have_gpgme = xno ], [
-       AC_MSG_ERROR([Need GPGME_PTHREAD version $LIBGPGME_DEPENDENCY or later])
+       AC_MSG_ERROR([Need GPGME_PTHREAD version $LIBGPGME_PTHREAD_DEPENDENCY or later])
     ])
     OSTREE_FEATURES="$OSTREE_FEATURES gpgme"
     PKG_CHECK_MODULES(OT_DEP_GPG_ERROR, [gpg-error], [], [
@@ -234,14 +260,64 @@ dnl to link to it directly.
     ])
     OT_DEP_GPGME_CFLAGS="${OT_DEP_GPGME_CFLAGS} ${OT_DEP_GPG_ERROR_CFLAGS}"
     OT_DEP_GPGME_LIBS="${OT_DEP_GPGME_LIBS} ${OT_DEP_GPG_ERROR_LIBS}"
-    ],
+    ]
+)
+AS_IF([test x$with_gpgme != xno && test x$have_gpgme != xyes],
+      [AC_MSG_ERROR([Need GPGME_PTHREAD and GPG_ERROR])]
+)
+AS_IF([test x$have_gpgme = xyes],
+    [ OSTREE_FEATURES="$OSTREE_FEATURES gpgme" ],
     [
     AC_DEFINE([OSTREE_DISABLE_GPGME], 1, [Define to disable internal GPGME support])
-    with_gpgme=no
+    have_gpgme=no
     ]
 )
 AM_CONDITIONAL(USE_GPGME, test "x$have_gpgme" = xyes)
 
+dnl composefs won't work at all without this
+AC_MSG_CHECKING([for MOUNT_ATTR_IDMAP])
+AC_COMPILE_IFELSE(
+	[AC_LANG_PROGRAM([
+			#include <sys/mount.h>
+			#include <linux/mount.h>
+  ],[int foo = MOUNT_ATTR_IDMAP;]
+	)],
+	[AC_MSG_RESULT(yes)
+	 have_mount_attr_idmap=yes],
+	[AC_MSG_RESULT(no)])
+dnl These are needed by libcomposefs to use the new mount API optionally
+AC_MSG_CHECKING([for new mount API (fsconfig)])
+AC_COMPILE_IFELSE(
+	[AC_LANG_SOURCE([[
+			#include <sys/mount.h>
+			int cmd = FSCONFIG_CMD_CREATE;
+	]])],
+	[AC_MSG_RESULT(yes)
+		 AC_DEFINE([HAVE_FSCONFIG_CMD_CREATE_SYS_MOUNT_H], 1, [Define if FSCONFIG_CMD_CREATE is available in sys/mount.h])],
+	[AC_MSG_RESULT(no)])
+AC_COMPILE_IFELSE(
+	[AC_LANG_SOURCE([[
+			/* also make sure it doesn't conflict with <sys/mount.h> since it is always used.  */
+			#include <sys/mount.h>
+			#include <linux/mount.h>
+			int cmd = FSCONFIG_CMD_CREATE;
+	]])],
+	[AC_MSG_RESULT(yes)
+		 AC_DEFINE([HAVE_FSCONFIG_CMD_CREATE_LINUX_MOUNT_H], 1, [Define if FSCONFIG_CMD_CREATE is available in linux/mount.h])],
+	[AC_MSG_RESULT(no)])
+
+composefs_default=yes
+if test x"$have_mount_attr_idmap" != xyes; then
+  composefs_default=no
+fi
+AC_ARG_WITH(composefs,
+	    AS_HELP_STRING([--with-composefs], [Support composefs]),
+	    :, with_composefs=$composefs_default)
+
+if test x$with_composefs != xno; then OSTREE_FEATURES="$OSTREE_FEATURES composefs";
+   AC_DEFINE([HAVE_COMPOSEFS], 1, [Define if we have libcomposefs])
+fi
+AM_CONDITIONAL(USE_COMPOSEFS, test $with_composefs != no)
 
 LIBSODIUM_DEPENDENCY="1.0.14"
 AC_ARG_WITH(ed25519_libsodium,
@@ -253,7 +329,6 @@ AS_IF([test x$with_ed25519_libsodium != xno], [
     AS_IF([ test x$have_libsodium = xno ], [
        AC_MSG_ERROR([Need LIBSODIUM version $LIBSODIUM_DEPENDENCY or later])
     ])
-    OSTREE_FEATURES="$OSTREE_FEATURES sign-ed25519"
 ], with_ed25519_libsodium=no )
 AM_CONDITIONAL(USE_LIBSODIUM, test "x$have_libsodium" = xyes)
 
@@ -392,6 +467,11 @@ if test x$with_openssl != xno; then OSTREE_FEATURES="$OSTREE_FEATURES openssl"; 
 AM_CONDITIONAL(USE_OPENSSL, test $with_openssl != no)
 dnl end openssl
 
+if test x$with_openssl != xno || test x$with_ed25519_libsodium != xno; then
+   AC_DEFINE([HAVE_ED25519], 1, [Define if ed25519 is supported ])
+   OSTREE_FEATURES="$OSTREE_FEATURES sign-ed25519"
+fi
+
 dnl begin gnutls; in contrast to openssl this one only
 dnl supports --with-crypto=gnutls
 GNUTLS_DEPENDENCY="gnutls >= 3.5.0"
@@ -402,6 +482,10 @@ AS_IF([ test $with_crypto = gnutls ], [
 ])
 AM_CONDITIONAL(USE_GNUTLS, test $with_crypto = gnutls)
 dnl end gnutls
+
+dnl we always inject libsodium into our crypto deps in addition to openssl/gnutls
+OT_DEP_CRYPTO_CFLAGS="${OT_DEP_CRYPTO_CFLAGS} ${OT_DEP_LIBSODIUM_CFLAGS}"
+OT_DEP_CRYPTO_LIBS="${OT_DEP_CRYPTO_LIBS} ${OT_DEP_LIBSODIUM_LIBS}"
 
 dnl Avahi dependency for finding repos
 AVAHI_DEPENDENCY="avahi-client >= 0.6.31 avahi-glib >= 0.6.31"
@@ -620,13 +704,13 @@ echo "
     introspection:                                $found_introspection
     rofiles-fuse:                                 $enable_rofiles_fuse
     HTTP backend:                                 $fetcher_backend
-    \"ostree trivial-httpd\":                       $enable_trivial_httpd_cmdline
     SELinux:                                      $with_selinux
     fs-verity:                                    $ac_cv_header_linux_fsverity_h
     cryptographic checksums:                      $with_crypto
     systemd:                                      $with_libsystemd
     libmount:                                     $with_libmount
     libsodium (ed25519 signatures):               $with_ed25519_libsodium
+    openssl (ed25519 signatures):                 $with_openssl
     libarchive (parse tar files directly):        $with_libarchive
     static deltas:                                yes (always enabled now)
     O_TMPFILE:                                    $enable_otmpfile
@@ -637,7 +721,8 @@ echo "
     gjs-based tests:                              $have_gjs
     dracut:                                       $with_dracut
     mkinitcpio:                                   $with_mkinitcpio
-    Static compiler for ostree-prepare-root:      $with_static_compiler"
+    Static compiler for ostree-prepare-root:      $with_static_compiler
+    Composefs:                                    $with_composefs"
 AS_IF([test x$with_builtin_grub2_mkconfig = xyes], [
     echo "    builtin grub2-mkconfig (instead of system):   $with_builtin_grub2_mkconfig"
 ], [

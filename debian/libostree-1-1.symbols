@@ -43,6 +43,10 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  LIBOSTREE_2021.5@LIBOSTREE_2021.5 2021.5
  LIBOSTREE_2022.2@LIBOSTREE_2022.2 2022.2
  LIBOSTREE_2022.4@LIBOSTREE_2022.4 2022.4
+ LIBOSTREE_2022.5@LIBOSTREE_2022.5 2022.5
+ LIBOSTREE_2022.7@LIBOSTREE_2022.7 2022.7
+ LIBOSTREE_2023.1@LIBOSTREE_2023.1 2023.1
+ LIBOSTREE_2023.4@LIBOSTREE_2023.4 2023.5
  ostree_async_progress_copy_state@LIBOSTREE_2019.6 2019.6
  ostree_async_progress_finish@LIBOSTREE_2016.3 2016.4
  ostree_async_progress_get@LIBOSTREE_2017.6 2017.6
@@ -163,9 +167,12 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_kernel_args_append@LIBOSTREE_2019.3 2019.3
  ostree_kernel_args_append_argv@LIBOSTREE_2019.3 2019.3
  ostree_kernel_args_append_argv_filtered@LIBOSTREE_2019.3 2019.3
+ ostree_kernel_args_append_if_missing@LIBOSTREE_2022.5 2022.5
  ostree_kernel_args_append_proc_cmdline@LIBOSTREE_2019.3 2019.3
  ostree_kernel_args_cleanup@LIBOSTREE_2019.3 2019.3
+ ostree_kernel_args_contains@LIBOSTREE_2022.7 2022.7
  ostree_kernel_args_delete@LIBOSTREE_2019.3 2019.3
+ ostree_kernel_args_delete_if_present@LIBOSTREE_2022.7 2022.7
  ostree_kernel_args_delete_key_entry@LIBOSTREE_2019.3 2019.3
  ostree_kernel_args_free@LIBOSTREE_2019.3 2019.3
  ostree_kernel_args_from_string@LIBOSTREE_2019.3 2019.3
@@ -222,6 +229,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_repo_checkout_gc@LIBOSTREE_2016.3 2016.4
  ostree_repo_checkout_tree@LIBOSTREE_2016.3 2016.4
  ostree_repo_checkout_tree_at@LIBOSTREE_2016.3 2016.4
+ ostree_repo_commit_add_composefs_metadata@LIBOSTREE_2023.4 2023.5
  ostree_repo_commit_modifier_get_type@LIBOSTREE_2016.3 2016.4
  ostree_repo_commit_modifier_new@LIBOSTREE_2016.3 2016.4
  ostree_repo_commit_modifier_ref@LIBOSTREE_2016.3 2016.4
@@ -344,6 +352,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_repo_query_object_storage_size@LIBOSTREE_2016.3 2016.4
  ostree_repo_read_commit@LIBOSTREE_2016.3 2016.4
  ostree_repo_read_commit_detached_metadata@LIBOSTREE_2016.3 2016.4
+ ostree_repo_regenerate_metadata@LIBOSTREE_2023.1 2023.1
  ostree_repo_regenerate_summary@LIBOSTREE_2016.3 2016.4
  ostree_repo_reload_config@LIBOSTREE_2017.2 2017.2
  ostree_repo_remote_add@LIBOSTREE_2016.3 2016.4
@@ -447,6 +456,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_sysroot_deploy_tree@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_deploy_tree_with_options@LIBOSTREE_2020.7 2020.7
  ostree_sysroot_deployment_set_kargs@LIBOSTREE_2016.3 2016.4
+ ostree_sysroot_deployment_set_kargs_in_place@LIBOSTREE_2022.5 2022.5
  ostree_sysroot_deployment_set_mutable@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_deployment_set_pinned@LIBOSTREE_2018.3 2018.3
  ostree_sysroot_deployment_unlock@LIBOSTREE_2016.4 2016.4
@@ -466,6 +476,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_sysroot_get_type@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_init_osname@LIBOSTREE_2016.4 2016.4
  ostree_sysroot_initialize@LIBOSTREE_2020.1 2020.1
+ ostree_sysroot_initialize_with_mount_namespace@LIBOSTREE_2022.7 2022.7
  ostree_sysroot_is_booted@LIBOSTREE_2020.1 2020.1
  ostree_sysroot_load@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_load_if_changed@LIBOSTREE_2016.4 2016.4

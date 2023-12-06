@@ -24,64 +24,70 @@
 #include "ot-main.h"
 #include "ot-remote-builtins.h"
 
-static char* opt_cache_dir;
+static gboolean opt_revision;
+static char *opt_cache_dir;
 
 /* ATTENTION:
  * Please remember to update the bash-completion script (bash/ostree) and
  * man page (man/ostree-remote.xml) when changing the option list.
  */
 
-static GOptionEntry option_entries[] = {
-  { "cache-dir", 0, 0, G_OPTION_ARG_FILENAME, &opt_cache_dir, "Use custom cache dir", NULL },
-  { NULL }
-};
+static GOptionEntry option_entries[]
+    = { { "revision", 'r', 0, G_OPTION_ARG_NONE, &opt_revision, "Show revisions in listing", NULL },
+        { "cache-dir", 0, 0, G_OPTION_ARG_FILENAME, &opt_cache_dir, "Use custom cache dir", NULL },
+        { NULL } };
 
 gboolean
-ot_remote_builtin_refs (int argc, char **argv, OstreeCommandInvocation *invocation, GCancellable *cancellable, GError **error)
+ot_remote_builtin_refs (int argc, char **argv, OstreeCommandInvocation *invocation,
+                        GCancellable *cancellable, GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(OstreeRepo) repo = NULL;
-  const char *remote_name;
-  gboolean ret = FALSE;
-  g_autoptr(GHashTable) refs = NULL;
+  g_autoptr (GOptionContext) context = g_option_context_new ("NAME");
 
-  context = g_option_context_new ("NAME");
-
-  if (!ostree_option_context_parse (context, option_entries, &argc, &argv,
-                                    invocation, &repo, cancellable, error))
-    goto out;
+  g_autoptr (OstreeRepo) repo = NULL;
+  if (!ostree_option_context_parse (context, option_entries, &argc, &argv, invocation, &repo,
+                                    cancellable, error))
+    return FALSE;
 
   if (argc < 2)
     {
       ot_util_usage_error (context, "NAME must be specified", error);
-      goto out;
+      return FALSE;
     }
 
   if (opt_cache_dir)
     {
       if (!ostree_repo_set_cache_dir (repo, AT_FDCWD, opt_cache_dir, cancellable, error))
-        goto out;
+        return FALSE;
     }
 
-  remote_name = argv[1];
+  const char *remote_name = argv[1];
+  g_autoptr (GHashTable) refs = NULL;
 
   if (!ostree_repo_remote_list_refs (repo, remote_name, &refs, cancellable, error))
-    goto out;
+    return FALSE;
   else
     {
-      g_autoptr(GList) ordered_keys = NULL;
+      g_autoptr (GList) ordered_keys = NULL;
       GList *iter = NULL;
 
       ordered_keys = g_hash_table_get_keys (refs);
-      ordered_keys = g_list_sort (ordered_keys, (GCompareFunc) strcmp);
+      ordered_keys = g_list_sort (ordered_keys, (GCompareFunc)strcmp);
 
       for (iter = ordered_keys; iter; iter = iter->next)
         {
-          g_print ("%s:%s\n", remote_name, (const char *) iter->data);
+          const char *ref = iter->data;
+
+          if (opt_revision)
+            {
+              const char *rev = g_hash_table_lookup (refs, ref);
+              g_print ("%s:%s\t%s\n", remote_name, ref, rev);
+            }
+          else
+            {
+              g_print ("%s:%s\n", remote_name, ref);
+            }
         }
     }
 
-  ret = TRUE;
-out:
-  return ret;
+  return TRUE;
 }

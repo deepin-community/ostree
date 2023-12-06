@@ -22,9 +22,9 @@ int main (void)
 }
 EOF
 
-# Deliberately word-splitting, that's how pkg-config works:
+# Deliberately word-splitting, that's how pkgconf works:
 # shellcheck disable=SC2046
-"${CROSS_COMPILE}gcc" -o trivial trivial.c $("${CROSS_COMPILE}pkg-config" --cflags --libs ostree-1 gobject-2.0)
+"${CROSS_COMPILE}gcc" -o trivial trivial.c $("${CROSS_COMPILE}pkgconf" --cflags --libs ostree-1 gobject-2.0)
 test -x trivial
 ./trivial
 echo "OK"

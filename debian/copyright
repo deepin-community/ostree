@@ -6,22 +6,26 @@ Files:
  *
 Copyright:
  © 1995-1997 Peter Mattis, Spencer Kimball and Josh MacDonald
- © 1995-2015 Free Software Foundation, Inc.
+ © 1995-2023 Free Software Foundation, Inc.
+ © 1998 Manish Singh
+ © 1998 Tim Janik
  © 1999-2003 Ximian, Inc.
+ © 2006 Dave Benson
  © 2007-2008 Ryan Lortie
- © 2008-2022 Red Hat, Inc
+ © 2008-2023 Red Hat, Inc
  © 2010-2011 Lennart Poettering
  © 2010 Codethink Ltd.
  © 2011-2019 Colin Walters <walters@verbum.org>
  © 2011 Avery Pennarun
- © 2013-2020 Collabora Ltd.
+ © 2013-2022 Collabora Ltd.
  © 2013 Stef Walter <stef@redhat.com>
  © 2013 Javier Martinez <javier.martinez@collabora.co.uk>
  © 2013 Jeremy Whiting <jeremy.whiting@collabora.com>
  © 2013-2016 Sjoerd Simons <sjoerd.simons@collabora.co.uk>
- © 2014-2017 Alexander Larsson <alexl@redhat.com>
+ © 2014-2023 Alexander Larsson <alexl@redhat.com>
  © 2014 Anne LoVerso
  © 2014 Owen Taylor <otaylor@redhat.com>
+ © 2014 Dan Winship
  © 2015 Dan Nicholson <nicholson@endlessm.com>
  © 2015 Canonical Ltd.
  © 2015 Matthew Barnes
@@ -29,14 +33,19 @@ Copyright:
  © 2016 Kinvolk GmbH
  © 2016 Zbigniew Jędrzejewski-Szmek
  © 2017 Georges Basile Stavracas Neto
+ © 2017 Emmanuele Bassi
  © 2018 Matthew Leeds
  © 2018 Sinny Kumari
  © 2019 Rafael Fonseca
  © 2019 Robert Fairley
  © 2019 Wind River Systems, Inc.
  © 2019 Denis Pynkin
- © 2021 Endless OS Foundation LLC
+ © 2018-2023 Endless OS Foundation LLC
+ © 2020-2022 Niels De Graef
+ © 2021 Giuseppe Scrivano
  © 2022 Igalia S.L.
+ © 2022 Huijing Hei
+ © 2022 Eric Curtin
 License: LGPL-2+ and LGPL-2.1+
 
 Files:
@@ -53,6 +62,13 @@ Copyright:
  2006-2008 xine project
  2012 Lucas De Marchi
 License: GPL-2+ with Autoconf exception
+
+Files:
+ composefs/libcomposefs/erofs_fs.h
+Copyright:
+ 2017-2018 HUAWEI, Inc.
+ 2021 Alibaba Cloud
+License: GPL-2+ or Apache-2.0
 
 Files:
  gtk-doc.make
@@ -89,6 +105,32 @@ Copyright:
  © 2016-2021 Collabora Ltd.
  © 2017-2021 Simon McVittie
 License: LGPL-2+
+
+License: Apache-2.0
+ (Apache license referenced a via SPDX license header, no license grant)
+Comment:
+ On Debian systems, the full text of the Apache License version 2
+ can be found in the file '/usr/share/common-licenses/Apache-2.0'.
+
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2, or (at your option)
+ any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ 02110-1301, USA.
+Comment:
+ On Debian systems, the full text of the GNU General Public
+ License version 2 can be found in the file
+ '/usr/share/common-licenses/GPL-2'.
 
 License: GPL-2+ with Autoconf exception
  This program is free software; you can redistribute it and/or modify

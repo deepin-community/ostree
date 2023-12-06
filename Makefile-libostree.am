@@ -87,6 +87,7 @@ libostree_1_la_SOURCES = \
 	src/libostree/ostree-repo.c \
 	src/libostree/ostree-repo-checkout.c \
 	src/libostree/ostree-repo-commit.c \
+	src/libostree/ostree-repo-composefs.c \
 	src/libostree/ostree-repo-pull.c \
 	src/libostree/ostree-repo-pull-private.h \
 	src/libostree/ostree-repo-pull-verify.c \
@@ -111,6 +112,8 @@ libostree_1_la_SOURCES = \
 	src/libostree/ostree-deployment.c \
 	src/libostree/ostree-bootloader.h \
 	src/libostree/ostree-bootloader.c \
+	src/libostree/ostree-bootloader-aboot.h \
+	src/libostree/ostree-bootloader-aboot.c \
 	src/libostree/ostree-bootloader-grub2.h \
 	src/libostree/ostree-bootloader-grub2.c \
 	src/libostree/ostree-bootloader-zipl.h \
@@ -133,6 +136,7 @@ libostree_1_la_SOURCES = \
 	src/libostree/ostree-repo-finder-mount.c \
 	src/libostree/ostree-repo-finder-override.c \
 	src/libostree/ostree-kernel-args.h \
+	src/libostree/ostree-kernel-args-private.h \
 	src/libostree/ostree-kernel-args.c \
 	$(NULL)
 if USE_LIBARCHIVE
@@ -182,12 +186,13 @@ EXTRA_DIST += \
 	$(top_srcdir)/src/libostree/libostree-released.sym \
 	$(NULL)
 
-libostree_1_la_CFLAGS = $(AM_CFLAGS) -I$(srcdir)/bsdiff -I$(srcdir)/libglnx -I$(srcdir)/src/libotutil -I$(srcdir)/src/libostree -I$(builddir)/src/libostree \
+libostree_1_la_CFLAGS = $(AM_CFLAGS) -I$(srcdir)/bsdiff -I$(srcdir)/libglnx -I$(srcdir)/composefs -I$(srcdir)/src/libotutil -I$(srcdir)/src/libotcore -I$(srcdir)/src/libostree -I$(builddir)/src/libostree \
+    -I$(srcdir)/src/switchroot \
 	$(OT_INTERNAL_GIO_UNIX_CFLAGS) $(OT_INTERNAL_GPGME_CFLAGS) $(OT_DEP_LZMA_CFLAGS) $(OT_DEP_ZLIB_CFLAGS) $(OT_DEP_CRYPTO_CFLAGS) \
 	-fvisibility=hidden '-D_OSTREE_PUBLIC=__attribute__((visibility("default"))) extern' \
 	-DPKGLIBEXECDIR=\"$(pkglibexecdir)\"
 libostree_1_la_LDFLAGS = -version-number 1:0:0 -Bsymbolic-functions $(addprefix $(wl_versionscript_arg),$(symbol_files))
-libostree_1_la_LIBADD = libotutil.la libglnx.la libbsdiff.la $(OT_INTERNAL_GIO_UNIX_LIBS) $(OT_INTERNAL_GPGME_LIBS) \
+libostree_1_la_LIBADD = libotutil.la libotcore.la libglnx.la libbsdiff.la $(OT_INTERNAL_GIO_UNIX_LIBS) $(OT_INTERNAL_GPGME_LIBS) \
                         $(OT_DEP_LZMA_LIBS) $(OT_DEP_ZLIB_LIBS) $(OT_DEP_CRYPTO_LIBS)
 # Some change between rust-1.21.0-1.fc27 and rust-1.22.1-1.fc27.x86_64
 libostree_1_la_LIBADD += $(bupsplitpath)
@@ -219,16 +224,23 @@ libostree_1_la_SOURCES += \
 	$(NULL)
 endif
 
+# Only enable one fetcher backend.
 if USE_CURL
 libostree_1_la_SOURCES += src/libostree/ostree-fetcher-curl.c \
   $(NULL)
 libostree_1_la_CFLAGS += $(OT_DEP_CURL_CFLAGS)
 libostree_1_la_LIBADD += $(OT_DEP_CURL_LIBS)
 else
+if USE_LIBSOUP3
+libostree_1_la_SOURCES += src/libostree/ostree-fetcher-soup3.c
+libostree_1_la_CFLAGS += $(OT_INTERNAL_SOUP_CFLAGS)
+libostree_1_la_LIBADD += $(OT_INTERNAL_SOUP_LIBS)
+else
 if USE_LIBSOUP
 libostree_1_la_SOURCES += src/libostree/ostree-fetcher-soup.c
 libostree_1_la_CFLAGS += $(OT_INTERNAL_SOUP_CFLAGS)
 libostree_1_la_LIBADD += $(OT_INTERNAL_SOUP_LIBS)
+endif
 endif
 endif
 
@@ -249,12 +261,12 @@ libostree_1_la_SOURCES += \
 	src/libostree/ostree-sign-dummy.h \
 	src/libostree/ostree-sign-ed25519.c \
 	src/libostree/ostree-sign-ed25519.h \
+	src/libostree/ostree-sign-private.h \
 	$(NULL)
 
-if USE_LIBSODIUM
-libostree_1_la_CFLAGS += $(OT_DEP_LIBSODIUM_CFLAGS)
-libostree_1_la_LIBADD += $(OT_DEP_LIBSODIUM_LIBS)
-endif # USE_LIBSODIUM
+if USE_COMPOSEFS
+libostree_1_la_LIBADD += libcomposefs.la
+endif # USE_COMPOSEFS
 
 # XXX: work around clang being passed -fstack-clash-protection which it doesn't understand
 # See: https://bugzilla.redhat.com/show_bug.cgi?id=1672012
@@ -264,10 +276,11 @@ if BUILDOPT_INTROSPECTION
 OSTree-1.0.gir: libostree-1.la Makefile
 OSTree_1_0_gir_EXPORT_PACKAGES = ostree-1
 OSTree_1_0_gir_INCLUDES = Gio-2.0
+OSTree_1_0_gir_C_INCLUDES = ostree.h
 OSTree_1_0_gir_CFLAGS = $(libostree_1_la_CFLAGS)
 OSTree_1_0_gir_LIBS = libostree-1.la
 OSTree_1_0_gir_SCANNERFLAGS = --warn-all --identifier-prefix=Ostree --symbol-prefix=ostree $(GI_SCANNERFLAGS)
-OSTree_1_0_gir_FILES = $(libostreeinclude_HEADERS) $(filter-out %-private.h %/ostree-soup-uri.h,$(libostree_1_la_SOURCES))
+OSTree_1_0_gir_FILES = $(libostreeinclude_HEADERS) $(filter-out %.h,$(libostree_1_la_SOURCES))
 INTROSPECTION_GIRS += OSTree-1.0.gir
 gir_DATA += OSTree-1.0.gir
 typelib_DATA += OSTree-1.0.typelib
@@ -284,12 +297,8 @@ EXTRA_DIST += src/libostree/README-gpg src/libostree/bupsplit.h \
 		src/libostree/ostree-enumtypes.c.template \
 		src/libostree/ostree-deployment-private.h \
 		src/libostree/ostree-repo-deprecated.h \
-		src/libostree/ostree-version.h \
-		src/libostree/s390x-se-luks-gencpio
+		src/libostree/ostree-version.h
 
 install-mkdir-remotes-d-hook:
 	mkdir -p $(DESTDIR)$(sysconfdir)/ostree/remotes.d
 INSTALL_DATA_HOOKS += install-mkdir-remotes-d-hook
-
-# Secure Execution: script for creating new initramdisk with LUKS key and config
-pkglibexec_SCRIPTS += src/libostree/s390x-se-luks-gencpio

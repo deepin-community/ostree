@@ -22,16 +22,21 @@
 #define __OSTREE_MOUNT_UTIL_H_
 
 #include <err.h>
-#include <stdlib.h>
-#include <sys/statvfs.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/statvfs.h>
+#include <unistd.h>
 
 #define INITRAMFS_MOUNT_VAR "/run/ostree/initramfs-mount-var"
 #define _OSTREE_SYSROOT_READONLY_STAMP "/run/ostree-sysroot-ro.stamp"
+#define _OSTREE_COMPOSEFS_ROOT_STAMP "/run/ostree-composefs-root.stamp"
+
+#define autofree __attribute__ ((cleanup (cleanup_free)))
 
 static inline int
 path_is_on_readonly_fs (const char *path)
@@ -47,7 +52,7 @@ path_is_on_readonly_fs (const char *path)
 static inline char *
 read_proc_cmdline (void)
 {
-  FILE *f = fopen("/proc/cmdline", "r");
+  FILE *f = fopen ("/proc/cmdline", "r");
   char *cmdline = NULL;
   size_t len;
 
@@ -64,46 +69,44 @@ read_proc_cmdline (void)
    */
   len = strlen (cmdline);
 
-  if (cmdline[len-1] == '\n')
-    cmdline[len-1] = '\0';
+  if (cmdline[len - 1] == '\n')
+    cmdline[len - 1] = '\0';
 out:
   if (f)
     fclose (f);
   return cmdline;
 }
 
-static inline char *
-read_proc_cmdline_ostree (void)
+static inline void
+cleanup_free (void *p)
 {
-  char *cmdline = NULL;
-  const char *iter;
-  char *ret = NULL;
+  void **pp = (void **)p;
+  free (*pp);
+}
 
-  cmdline = read_proc_cmdline ();
-  if (!cmdline)
-    err (EXIT_FAILURE, "failed to read /proc/cmdline");
-
-  iter = cmdline;
-  while (iter != NULL)
+static inline char *
+find_proc_cmdline_key (const char *cmdline, const char *key)
+{
+  const size_t key_len = strlen (key);
+  for (const char *iter = cmdline; iter;)
     {
       const char *next = strchr (iter, ' ');
-      const char *next_nonspc = next;
-      while (next_nonspc && *next_nonspc == ' ')
-        next_nonspc += 1;
-      if (strncmp (iter, "ostree=", strlen ("ostree=")) == 0)
+      if (strncmp (iter, key, key_len) == 0 && iter[key_len] == '=')
         {
-          const char *start = iter + strlen ("ostree=");
+          const char *start = iter + key_len + 1;
           if (next)
-            ret = strndup (start, next - start);
-          else
-            ret = strdup (start);
-          break;
+            return strndup (start, next - start);
+
+          return strdup (start);
         }
-      iter = next_nonspc;
+
+      if (next)
+        next += strspn (next, " ");
+
+      iter = next;
     }
 
-  free (cmdline);
-  return ret;
+  return NULL;
 }
 
 /* This is an API for other projects to determine whether or not the
@@ -118,7 +121,7 @@ touch_run_ostree (void)
    */
   if (fd == -1)
     return;
-  (void) close (fd);
+  (void)close (fd);
 }
 
 #endif /* __OSTREE_MOUNT_UTIL_H_ */

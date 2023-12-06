@@ -21,49 +21,42 @@
 
 #include "config.h"
 
-#include "ot-main.h"
 #include "ot-admin-builtins.h"
 #include "ot-admin-functions.h"
+#include "ot-main.h"
 #include "otutil.h"
 
 #include <glib/gi18n.h>
 
-static GOptionEntry options[] = {
-  { NULL }
-};
+static GOptionEntry options[] = { { NULL } };
 
 gboolean
-ot_admin_builtin_os_init (int argc, char **argv, OstreeCommandInvocation *invocation, GCancellable *cancellable, GError **error)
+ot_admin_builtin_os_init (int argc, char **argv, OstreeCommandInvocation *invocation,
+                          GCancellable *cancellable, GError **error)
 {
-  g_autoptr(GOptionContext) context = NULL;
-  g_autoptr(OstreeSysroot) sysroot = NULL;
-  gboolean ret = FALSE;
-  const char *osname = NULL;
+  g_autoptr (GOptionContext) context = g_option_context_new ("STATEROOT");
 
-  context = g_option_context_new ("OSNAME");
-
+  g_autoptr (OstreeSysroot) sysroot = NULL;
   if (!ostree_admin_option_context_parse (context, options, &argc, &argv,
-                                          OSTREE_ADMIN_BUILTIN_FLAG_SUPERUSER | OSTREE_ADMIN_BUILTIN_FLAG_UNLOCKED,
-                                          invocation, &sysroot, cancellable, error))
-    goto out;
+                                          OSTREE_ADMIN_BUILTIN_FLAG_SUPERUSER, invocation, &sysroot,
+                                          cancellable, error))
+    return FALSE;
 
   if (!ostree_sysroot_ensure_initialized (sysroot, cancellable, error))
-    goto out;
+    return FALSE;
 
   if (argc < 2)
     {
-      ot_util_usage_error (context, "OSNAME must be specified", error);
-      goto out;
+      ot_util_usage_error (context, "STATEROOT must be specified", error);
+      return FALSE;
     }
 
-  osname = argv[1];
+  const char *osname = argv[1];
 
   if (!ostree_sysroot_init_osname (sysroot, osname, cancellable, error))
-    goto out;
+    return FALSE;
 
-  g_print ("ostree/deploy/%s initialized as OSTree root\n", osname);
+  g_print ("ostree/deploy/%s initialized as OSTree stateroot\n", osname);
 
-  ret = TRUE;
- out:
-  return ret;
+  return TRUE;
 }

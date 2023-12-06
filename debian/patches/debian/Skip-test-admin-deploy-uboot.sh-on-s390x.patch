@@ -1,0 +1,29 @@
+From: Simon McVittie <smcv@debian.org>
+Date: Thu, 26 Oct 2023 11:26:04 +0100
+Subject: Skip test-admin-deploy-uboot.sh on s390x
+
+It fails on a porterbox. ostree hard-codes zipl to be used on s390x,
+so it's reasonable that tests for other bootloaders might not work.
+
+Bug: https://github.com/ostreedev/ostree/issues/3086
+Forwarded: no
+---
+ tests/test-admin-deploy-uboot.sh | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/tests/test-admin-deploy-uboot.sh b/tests/test-admin-deploy-uboot.sh
+index 9a4d773..772e51d 100755
+--- a/tests/test-admin-deploy-uboot.sh
++++ b/tests/test-admin-deploy-uboot.sh
+@@ -20,6 +20,11 @@
+ 
+ set -euo pipefail
+ 
++if [ "${DEB_HOST_ARCH-$(dpkg --print-architecture)}" = s390x ]; then
++  echo "1..0 # SKIP uBoot not supported on s390x"
++  exit 0
++fi
++
+ . $(dirname $0)/libtest.sh
+ 
+ # Exports OSTREE_SYSROOT so --sysroot not needed.

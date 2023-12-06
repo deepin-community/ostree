@@ -185,6 +185,14 @@ License along with this library. If not, see <https://www.gnu.org/licenses/>.
             </varlistentry>
 
             <varlistentry>
+                <term><option>--selinux-labeling-epoch</option>0 | 1</term>
+
+                <listitem><para>
+                    When SELinux labeling is enabled, epoch <literal>1</literal> ensures that <literal>/usr/etc</literal> is labeled as if it was <literal>/etc</literal>.
+                </para></listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>--bootable</option></term>
                 <listitem><para>
                     Inject standard metadata for a bootable Linux filesystem tree.
@@ -311,10 +319,22 @@ License along with this library. If not, see <https://www.gnu.org/licenses/>.
                 </para></listitem>
 
             </varlistentry>
+
+            <varlistentry>
+                <term><option>--sign-from-file</option>="PATH"</term>
+                <listitem><para>
+                        This will read a key (corresponding to the provided <literal>--sign-type</literal> from the provided path.  The key should be base64 encoded.
+                </para></listitem>
+            </varlistentry>
+
             <varlistentry>
                 <term><option>--sign</option>="KEY-ID"</term>
                 <listitem><para>
-                        There <literal>KEY-ID</literal> is:
+                        In new code, avoid using this because passing private keys via command line arguments
+                        are prone to leakage in logs and process listings.
+                        </para>
+                        <para>
+                        The <literal>KEY-ID</literal> is:
                         <variablelist>
                             <varlistentry>
                                 <term><option>for ed25519:</option></term>
