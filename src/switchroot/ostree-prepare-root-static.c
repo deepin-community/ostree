@@ -204,12 +204,11 @@ main (int argc, char *argv[])
   const bool sysroot_readonly = sysroot_is_configured_ro (root_arg);
   const bool sysroot_currently_writable = !path_is_on_readonly_fs (root_arg);
 
-  /* Work-around for a kernel bug: for some reason the kernel
-   * refuses switching root if any file systems are mounted
-   * MS_SHARED. Hence remount them MS_PRIVATE here as a
-   * work-around.
+  /* Remount root MS_PRIVATE here to avoid errors due to the kernel-enforced
+   * constraint that disallows MS_SHARED mounts to be moved.
    *
-   * https://bugzilla.redhat.com/show_bug.cgi?id=847418 */
+   * Kernel docs: Documentation/filesystems/sharedsubtree.txt
+   */
   if (mount (NULL, "/", NULL, MS_REC | MS_PRIVATE | MS_SILENT, NULL) < 0)
     err (EXIT_FAILURE, "failed to make \"/\" private mount");
 
@@ -229,8 +228,7 @@ main (int argc, char *argv[])
   if (sysroot_readonly)
     {
       if (!sysroot_currently_writable)
-        errx (EXIT_FAILURE, "sysroot.readonly=true requires %s to be writable at this point",
-              root_arg);
+        errx (EXIT_FAILURE, OTCORE_SYSROOT_NOT_WRITEABLE, root_arg);
       /* Pass on the fact that we discovered a readonly sysroot to ostree-remount.service */
       int fd = open (_OSTREE_SYSROOT_READONLY_STAMP, O_WRONLY | O_CREAT | O_CLOEXEC, 0644);
       if (fd < 0)

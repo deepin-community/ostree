@@ -1,3 +1,74 @@
+ostree (2024.6-1) unstable; urgency=medium
+
+  * New upstream release
+  * d/rules: Disable libcomposefs support.
+    libcompose is not yet packaged in Debian (RFP: #1064457) and there
+    is no longer a vendored copy included in ostree. I am not able to
+    take responsibility for maintenance of libcompose, but I have no
+    objection to re-enabling the relevant libostree features if someone
+    else packages it.
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 08 Jun 2024 16:06:43 +0100
+
+ostree (2024.5-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 26 Mar 2024 16:15:22 +0000
+
+ostree (2024.4-1) unstable; urgency=medium
+
+  * New upstream release
+  * Drop non-Debian-specific patches, applied upstream
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 07 Mar 2024 10:54:27 +0000
+
+ostree (2024.3-1) unstable; urgency=medium
+
+  * New upstream release
+  * d/p/tests-Generalize-has_gpgme-has_sign_ed25519-into-has_ostr.patch,
+    d/p/tests-Use-skip_without_ostree_feature-to-detect-libarchiv.patch,
+    d/p/test-admin-deploy-var-Don-t-rely-on-OSTREE_FEATURES.patch:
+    Add proposed patches to fix an autopkgtest failure
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 19 Feb 2024 21:02:32 +0000
+
+ostree (2024.2-1) unstable; urgency=medium
+
+  * New upstream release
+  * Re-enable composefs.
+    We can't run its unit tests on a Debian 12 kernel with /var/tmp on
+    tmpfs, but they do pass on a sid kernel or if /var/tmp is disk-backed.
+  * Build-depend on dh-sequence-gir instead of using --with
+  * Update Lintian overrides for ostree-boot
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 11 Feb 2024 14:42:35 +0000
+
+ostree (2024.1-1) unstable; urgency=medium
+
+  * New upstream release
+  * Package ostree-state-overlay@.service in ostree-boot
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 24 Jan 2024 10:21:50 +0000
+
+ostree (2023.8-2) unstable; urgency=medium
+
+  * d/control, d/rules: Enable cross-compilation.
+    When cross-compiling, this requires a version of gobject-introspection
+    that is currently only available in experimental. When not
+    cross-compiling, the version in testing is sufficient.
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 31 Dec 2023 15:34:37 +0000
+
+ostree (2023.8-1) unstable; urgency=medium
+
+  * New upstream release
+  * d/libostree-1-1.symbols: Update
+  * d/p/bootloader-zipl-No-op-if-run-as-non-root.patch:
+    Drop patch, applied upstream
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 08 Dec 2023 10:35:12 +0000
+
 ostree (2023.7-3) unstable; urgency=medium
 
   * Remove version constraints unnecessary since bullseye

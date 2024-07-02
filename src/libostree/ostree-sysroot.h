@@ -178,7 +178,10 @@ gboolean ostree_sysroot_stage_overlay_initrd (OstreeSysroot *self, int fd, char 
 
 typedef struct
 {
-  gboolean unused_bools[8];
+  /* If set to true, then this deployment will be staged but "locked" and not automatically applied
+   * on reboot. */
+  gboolean locked;
+  gboolean unused_bools[7];
   int unused_ints[8];
   char **override_kernel_argv;
   char **overlay_initrds;
@@ -216,6 +219,10 @@ gboolean ostree_sysroot_stage_tree_with_options (OstreeSysroot *self, const char
                                                  GCancellable *cancellable, GError **error);
 
 _OSTREE_PUBLIC
+gboolean ostree_sysroot_change_finalization (OstreeSysroot *self, OstreeDeployment *deployment,
+                                             GError **error);
+
+_OSTREE_PUBLIC
 gboolean ostree_sysroot_deployment_set_mutable (OstreeSysroot *self, OstreeDeployment *deployment,
                                                 gboolean is_mutable, GCancellable *cancellable,
                                                 GError **error);
@@ -236,6 +243,10 @@ void ostree_sysroot_query_deployments_for (OstreeSysroot *self, const char *osna
 
 _OSTREE_PUBLIC
 OstreeDeployment *ostree_sysroot_get_merge_deployment (OstreeSysroot *self, const char *osname);
+
+_OSTREE_PUBLIC
+gboolean ostree_sysroot_update_post_copy (OstreeSysroot *self, GCancellable *cancellable,
+                                          GError **error);
 
 _OSTREE_PUBLIC
 GKeyFile *ostree_sysroot_origin_new_from_refspec (OstreeSysroot *self, const char *refspec);

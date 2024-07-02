@@ -1,7 +1,7 @@
 AC_PREREQ([2.63])
 dnl To perform a release, follow the instructions in `docs/CONTRIBUTING.md`.
-m4_define([year_version], [2023])
-m4_define([release_version], [7])
+m4_define([year_version], [2024])
+m4_define([release_version], [6])
 m4_define([package_version], [year_version.release_version])
 AC_INIT([libostree], [package_version], [walters@verbum.org])
 is_release_build=yes
@@ -85,7 +85,8 @@ LT_INIT([disable-static])
 dnl We have an always-on feature now to signify the fix for 
 dnl https://github.com/ostreedev/ostree/pull/2874/commits/de6fddc6adee09a93901243dc7074090828a1912
 dnl "commit: fix ostree deployment on 64-bit inode fs"
-OSTREE_FEATURES="inode64"
+dnl initial-var signifies this version of ostree propagates /var
+OSTREE_FEATURES="inode64 initial-var"
 AC_SUBST([OSTREE_FEATURES])
 
 GLIB_TESTS
@@ -155,17 +156,26 @@ AS_IF([test x$enable_http2 != xno ], [
 SOUP3_DEPENDENCY="libsoup-3.0 >= 3.0.0"
 AC_ARG_WITH(soup3,
 	    AS_HELP_STRING([--with-soup3], [Use libsoup3 @<:@default=no@:>@]),
-	    [], [with_soup3=no])
+	    [], [with_soup3=check])
 AS_IF([test x$with_soup3 != xno], [
-    PKG_CHECK_MODULES(OT_DEP_SOUP3, $SOUP3_DEPENDENCY)
-    with_soup3=yes
-    AC_DEFINE([HAVE_LIBSOUP3], 1, [Define if we have libsoup3])
-    OSTREE_FEATURES="$OSTREE_FEATURES libsoup3"
-    with_soup_default=no
-    dnl soup3 always supports client certs
-    have_libsoup_client_certs=yes
+    AC_MSG_CHECKING([for $SOUP3_DEPENDENCY])
+    PKG_CHECK_EXISTS($SOUP3_DEPENDENCY, have_soup3=yes, have_soup3=no)
+    AC_MSG_RESULT([$have_soup3])
+    AS_IF([ test x$have_soup3 = xno && test x$with_soup3 != xcheck], [
+       AC_MSG_ERROR([libsoup3 is enabled but could not be found])
+    ])
+    AS_IF([test x$have_soup3 = xyes], [
+      with_soup3=yes
+      PKG_CHECK_MODULES(OT_DEP_SOUP3, $SOUP3_DEPENDENCY)
+      AC_DEFINE([HAVE_LIBSOUP3], 1, [Define if we have libsoup3])
+      OSTREE_FEATURES="$OSTREE_FEATURES libsoup3"
+      dnl And disable libsoup2
+      with_soup_default=no
+      dnl soup3 always supports client certs
+      have_libsoup_client_certs=yes
+    ], [with_soup3=no])
 ], [with_soup_default=check])
-AM_CONDITIONAL(USE_LIBSOUP3, test x$with_soup3 != xno)
+AM_CONDITIONAL(USE_LIBSOUP3, test x$with_soup3 = xyes)
 
 dnl When bumping the libsoup-2.4 dependency, remember to bump
 dnl SOUP_VERSION_MIN_REQUIRED and SOUP_VERSION_MAX_ALLOWED in
@@ -274,50 +284,25 @@ AS_IF([test x$have_gpgme = xyes],
 )
 AM_CONDITIONAL(USE_GPGME, test "x$have_gpgme" = xyes)
 
-dnl composefs won't work at all without this
-AC_MSG_CHECKING([for MOUNT_ATTR_IDMAP])
-AC_COMPILE_IFELSE(
-	[AC_LANG_PROGRAM([
-			#include <sys/mount.h>
-			#include <linux/mount.h>
-  ],[int foo = MOUNT_ATTR_IDMAP;]
-	)],
-	[AC_MSG_RESULT(yes)
-	 have_mount_attr_idmap=yes],
-	[AC_MSG_RESULT(no)])
-dnl These are needed by libcomposefs to use the new mount API optionally
-AC_MSG_CHECKING([for new mount API (fsconfig)])
-AC_COMPILE_IFELSE(
-	[AC_LANG_SOURCE([[
-			#include <sys/mount.h>
-			int cmd = FSCONFIG_CMD_CREATE;
-	]])],
-	[AC_MSG_RESULT(yes)
-		 AC_DEFINE([HAVE_FSCONFIG_CMD_CREATE_SYS_MOUNT_H], 1, [Define if FSCONFIG_CMD_CREATE is available in sys/mount.h])],
-	[AC_MSG_RESULT(no)])
-AC_COMPILE_IFELSE(
-	[AC_LANG_SOURCE([[
-			/* also make sure it doesn't conflict with <sys/mount.h> since it is always used.  */
-			#include <sys/mount.h>
-			#include <linux/mount.h>
-			int cmd = FSCONFIG_CMD_CREATE;
-	]])],
-	[AC_MSG_RESULT(yes)
-		 AC_DEFINE([HAVE_FSCONFIG_CMD_CREATE_LINUX_MOUNT_H], 1, [Define if FSCONFIG_CMD_CREATE is available in linux/mount.h])],
-	[AC_MSG_RESULT(no)])
-
-composefs_default=yes
-if test x"$have_mount_attr_idmap" != xyes; then
-  composefs_default=no
-fi
 AC_ARG_WITH(composefs,
-	    AS_HELP_STRING([--with-composefs], [Support composefs]),
-	    :, with_composefs=$composefs_default)
+	    AS_HELP_STRING([--with-composefs], [Support composefs (default yes)]),
+	    :, with_composefs=maybe)
 
-if test x$with_composefs != xno; then OSTREE_FEATURES="$OSTREE_FEATURES composefs";
-   AC_DEFINE([HAVE_COMPOSEFS], 1, [Define if we have libcomposefs])
-fi
-AM_CONDITIONAL(USE_COMPOSEFS, test $with_composefs != no)
+have_composefs=no
+AS_IF([ test x$with_composefs != xno ], [
+    AC_MSG_CHECKING([for composefs])
+    PKG_CHECK_EXISTS(composefs, have_composefs=yes, have_composefs=no)
+    AC_MSG_RESULT([$have_composefs])
+    AS_IF([ test x$have_composefs = xno && test x$with_composefs != xmaybe ], [
+       AC_MSG_ERROR([composefs is enabled but could not be found])
+    ])
+    AS_IF([ test x$have_composefs = xyes], [
+      PKG_CHECK_MODULES(OT_DEP_COMPOSEFS, [composefs])
+      OSTREE_FEATURES="$OSTREE_FEATURES composefs";
+      AC_DEFINE([HAVE_COMPOSEFS], 1, [Define if we have libcomposefs])
+    ])
+])
+AM_CONDITIONAL(USE_COMPOSEFS, test x$have_composefs = xyes)
 
 LIBSODIUM_DEPENDENCY="1.0.14"
 AC_ARG_WITH(ed25519_libsodium,
@@ -704,6 +689,8 @@ echo "
     introspection:                                $found_introspection
     rofiles-fuse:                                 $enable_rofiles_fuse
     HTTP backend:                                 $fetcher_backend
+    libsoup:                                      $with_soup
+    libsoup3:                                     $with_soup3
     SELinux:                                      $with_selinux
     fs-verity:                                    $ac_cv_header_linux_fsverity_h
     cryptographic checksums:                      $with_crypto
@@ -722,7 +709,7 @@ echo "
     dracut:                                       $with_dracut
     mkinitcpio:                                   $with_mkinitcpio
     Static compiler for ostree-prepare-root:      $with_static_compiler
-    Composefs:                                    $with_composefs"
+    Composefs:                                    $have_composefs"
 AS_IF([test x$with_builtin_grub2_mkconfig = xyes], [
     echo "    builtin grub2-mkconfig (instead of system):   $with_builtin_grub2_mkconfig"
 ], [

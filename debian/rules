@@ -5,10 +5,14 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 binaries := $(shell dh_listpackages)
 
 %:
-	dh $@ --with=gir
+	dh $@
 
 override_dh_autoreconf:
-	env NOCONFIGURE=1 dh_autoreconf ./autogen.sh
+	mkdir -p debian/tmp-path
+ifneq (,$(filter nodoc,$(DEB_BUILD_PROFILES)))
+	ln -fns /bin/true debian/tmp-path/gtkdocize
+endif
+	env NOCONFIGURE=1 PATH=$(CURDIR)/debian/tmp-path:$(PATH) dh_autoreconf ./autogen.sh
 
 configure_options = \
 	--enable-installed-tests \
@@ -47,6 +51,12 @@ endif
 
 override_dh_auto_configure:
 	dh_auto_configure -- $(configure_options)
+
+override_dh_auto_build:
+	# The upstream build system overrides this to gcc as a way to avoid
+	# passing unsupported options to clang, but that's wrong for
+	# cross-builds
+	dh_auto_build -- INTROSPECTION_SCANNER_ENV="CC=$(DEB_HOST_GNU_TYPE)-gcc"
 
 override_dh_auto_test-arch:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))

@@ -61,12 +61,6 @@
 /* Define if ed25519 is supported */
 #undef HAVE_ED25519
 
-/* Define if FSCONFIG_CMD_CREATE is available in linux/mount.h */
-#undef HAVE_FSCONFIG_CMD_CREATE_LINUX_MOUNT_H
-
-/* Define if FSCONFIG_CMD_CREATE is available in sys/mount.h */
-#undef HAVE_FSCONFIG_CMD_CREATE_SYS_MOUNT_H
-
 /* Define if we have gnutls */
 #undef HAVE_GNUTLS
 

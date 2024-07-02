@@ -44,9 +44,23 @@ gboolean otcore_validate_ed25519_signature (GBytes *data, GBytes *pubkey, GBytes
                                             bool *out_valid, GError **error);
 
 char *otcore_find_proc_cmdline_key (const char *cmdline, const char *key);
-gboolean otcore_get_ostree_target (const char *cmdline, char **out_target, GError **error);
+gboolean otcore_get_ostree_target (const char *cmdline, gboolean *is_aboot, char **out_target,
+                                   GError **error);
 
 GKeyFile *otcore_load_config (int rootfs, const char *filename, GError **error);
+
+typedef struct
+{
+  OtTristate enabled;
+  gboolean is_signed;
+  char *signature_pubkey;
+  GPtrArray *pubkeys;
+} ComposefsConfig;
+void otcore_free_composefs_config (ComposefsConfig *config);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (ComposefsConfig, otcore_free_composefs_config)
+
+ComposefsConfig *otcore_load_composefs_config (GKeyFile *config, gboolean load_keys,
+                                               GError **error);
 
 // Our directory with transient state (eventually /run/ostree-booted should be a link to
 // /run/ostree/booted)
@@ -55,12 +69,26 @@ GKeyFile *otcore_load_config (int rootfs, const char *filename, GError **error);
 // we make it with mode 0 (which requires CAP_DAC_OVERRIDE to pass through).
 #define OTCORE_RUN_OSTREE_PRIVATE "/run/ostree/.private"
 
+#define PREPARE_ROOT_CONFIG_PATH "ostree/prepare-root.conf"
+
+// The directory holding extra/backing data for a deployment, such as overlayfs workdirs
+#define OSTREE_DEPLOYMENT_BACKING_DIR "backing"
+// The directory holding the root overlayfs
+#define OSTREE_DEPLOYMENT_ROOT_TRANSIENT_DIR "root-transient"
+
+// Written by ostree admin unlock --hotfix, read by ostree-prepare-root
+#define OTCORE_HOTFIX_USR_OVL_WORK ".usr-ovl-work"
+
 // The name of the composefs metadata root
 #define OSTREE_COMPOSEFS_NAME ".ostree.cfs"
 // The temporary directory used for the EROFS mount; it's in the .private directory
 // to help ensure that at least unprivileged code can't transiently see the underlying
 // EROFS mount if we somehow leaked it (but it *should* be unmounted always).
 #define OSTREE_COMPOSEFS_LOWERMNT OTCORE_RUN_OSTREE_PRIVATE "/cfsroot-lower"
+
+#define OTCORE_PREPARE_ROOT_COMPOSEFS_KEY "composefs"
+#define OTCORE_PREPARE_ROOT_ENABLED_KEY "enabled"
+#define OTCORE_PREPARE_ROOT_KEYPATH_KEY "keypath"
 
 // The file written in the initramfs which contains an a{sv} of metadata
 // from ostree-prepare-root.
@@ -70,7 +98,11 @@ GKeyFile *otcore_load_config (int rootfs, const char *filename, GError **error);
 // This key if present contains the public key successfully used
 // to verify the signature.
 #define OTCORE_RUN_BOOTED_KEY_COMPOSEFS_SIGNATURE "composefs.signed"
+// This key will be present if the root is transient
+#define OTCORE_RUN_BOOTED_KEY_ROOT_TRANSIENT "root.transient"
 // This key will be present if the sysroot-ro flag was found
 #define OTCORE_RUN_BOOTED_KEY_SYSROOT_RO "sysroot-ro"
+// Always holds the (device, inode) pair of the booted deployment
+#define OTCORE_RUN_BOOTED_KEY_BACKING_ROOTDEVINO "backing-root-device-inode"
 
 #define OTCORE_RUN_BOOTED_KEY_TRANSIENT_ETC "transient-etc"

@@ -10,5 +10,6 @@ usr/lib/systemd/system/ostree-finalize-staged.path
 usr/lib/systemd/system/ostree-finalize-staged.service
 usr/lib/systemd/system/ostree-prepare-root.service
 usr/lib/systemd/system/ostree-remount.service
+usr/lib/systemd/system/ostree-state-overlay@.service
 usr/lib/tmpfiles.d/ostree-tmpfiles.conf
 usr/libexec/libostree/grub2-15_ostree

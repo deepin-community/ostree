@@ -497,7 +497,7 @@ ostree_sepolicy_get_path (OstreeSePolicy *self)
  * ostree_sepolicy_get_name:
  * @self:
  *
- * Returns: (transfer none): Type of current policy
+ * Returns: (transfer none) (nullable): Type of current policy
  */
 const char *
 ostree_sepolicy_get_name (OstreeSePolicy *self)
@@ -752,4 +752,20 @@ _ostree_filter_selinux_xattr (GVariant *xattrs)
   if (!have_xattrs)
     return NULL;
   return g_variant_ref_sink (g_variant_builder_end (&builder));
+}
+
+/**
+ * _ostree_sepolicy_host_enabled:
+ * @self: Policy
+ *
+ * Return if the host has selinux enabled
+ */
+gboolean
+_ostree_sepolicy_host_enabled (OstreeSePolicy *self)
+{
+#ifdef HAVE_SELINUX
+  return cached_is_selinux_enabled ();
+#else
+  return FALSE;
+#endif
 }

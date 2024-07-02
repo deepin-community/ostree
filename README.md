@@ -63,6 +63,8 @@ The [machine-config-operator](https://github.com/openshift/machine-config-operat
 manages upgrades.  RHEL CoreOS is also the successor to RHEL Atomic Host, which
 uses rpm-ostree as well.
 
+[Red Hat In-Vehicle Operating System](https://www.redhat.com/en/blog/new-standard-red-hat-vehicle-operating-system-modern-and-future-vehicles) is a derivative of CentOS Automotive Stream Distribution that uses OSTree, it's closest Fedora derivative is Fedora IoT although it was created as it's own distribution.
+
 [GNOME Continuous](https://wiki.gnome.org/Projects/GnomeContinuous) is
 where OSTree was born - as a high performance continuous delivery/testing
 system for GNOME.
@@ -73,7 +75,10 @@ their host system as well as Flatpak.
 [Liri OS](https://liri.io/download/silverblue/) has the option to install
 their distribution using ostree.
 
-[TorizonCore](https://developer.toradex.com/torizon/working-with-torizon/torizoncore-technical-overview/) is a Linux distribution for embedded systems that updates via OSTree images delivered via [Uptane](https://uptane.github.io/) and [aktualizr](https://github.com/uptane/aktualizr/).
+[Torizon OS](https://developer.toradex.com/torizon/torizoncore/torizoncore-technical-overview/)
+is a Linux distribution for embedded systems that updates via OSTree images
+delivered via [Uptane](https://uptane.github.io/) and
+[aktualizr](https://github.com/uptane/aktualizr/).
 
 ## Distribution build tools
 
@@ -97,6 +102,10 @@ the build tool used to generate Fedora CoreOS derivatives.
 [debos](https://github.com/go-debos/debos) is a tool-chain for simplifying the
 process of building a Debian-based OS image.
 
+[gardenlinux/ostree-image-builder](https://github.com/gardenlinux/ostree-image-builder)
+is a sample for building Debian-based OS images.
+It is not production ready but it might be useful to get started.
+
 ## Projects linking to libostree
 
 [rpm-ostree](https://github.com/projectatomic/rpm-ostree) is used by the
@@ -115,7 +124,10 @@ use the "libostree host system" aspects (e.g. bootloader management), just the
 "git-like hardlink dedup". For example, Flatpak supports a per-user OSTree
 repository.
 
-[aktualizr](https://github.com/uptane/aktualizr/) is an [Uptane](https://uptane.github.io/)-conformant software update client library intended for use in automotive and other security-sensitive embedded devices. It uses OSTree to manage the OS of the host device by default.
+[aktualizr](https://github.com/uptane/aktualizr/) is an
+[Uptane](https://uptane.github.io/)-conformant software update client library
+intended for use in automotive and other security-sensitive embedded devices.
+It uses OSTree to manage the OS of the host device by default.
 
 ## Language bindings
 

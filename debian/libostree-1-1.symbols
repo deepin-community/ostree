@@ -47,6 +47,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  LIBOSTREE_2022.7@LIBOSTREE_2022.7 2022.7
  LIBOSTREE_2023.1@LIBOSTREE_2023.1 2023.1
  LIBOSTREE_2023.4@LIBOSTREE_2023.4 2023.5
+ LIBOSTREE_2023.8@LIBOSTREE_2023.8 2023.8
  ostree_async_progress_copy_state@LIBOSTREE_2019.6 2019.6
  ostree_async_progress_finish@LIBOSTREE_2016.3 2016.4
  ostree_async_progress_get@LIBOSTREE_2017.6 2017.6
@@ -135,6 +136,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_deployment_get_type@LIBOSTREE_2016.3 2016.4
  ostree_deployment_get_unlocked@LIBOSTREE_2016.4 2016.4
  ostree_deployment_hash@LIBOSTREE_2016.3 2016.4
+ ostree_deployment_is_finalization_locked@LIBOSTREE_2023.8 2023.8
  ostree_deployment_is_pinned@LIBOSTREE_2018.3 2018.3
  ostree_deployment_is_staged@LIBOSTREE_2018.5 2018.5
  ostree_deployment_new@LIBOSTREE_2016.3 2016.4
@@ -451,6 +453,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_sign_set_pk@LIBOSTREE_2020.4 2020.4
  ostree_sign_set_sk@LIBOSTREE_2020.4 2020.4
  ostree_sign_summary@LIBOSTREE_2020.4 2020.4
+ ostree_sysroot_change_finalization@LIBOSTREE_2023.8 2023.8
  ostree_sysroot_cleanup@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_cleanup_prune_repo@LIBOSTREE_2018.6 2018.6
  ostree_sysroot_deploy_tree@LIBOSTREE_2016.3 2016.4
@@ -498,6 +501,7 @@ libostree-1.so.1 libostree-1-1 #MINVER#
  ostree_sysroot_try_lock@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_unload@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_unlock@LIBOSTREE_2016.3 2016.4
+ ostree_sysroot_update_post_copy@LIBOSTREE_2023.8 2023.8
  ostree_sysroot_upgrader_check_timestamps@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_upgrader_deploy@LIBOSTREE_2016.3 2016.4
  ostree_sysroot_upgrader_dup_origin@LIBOSTREE_2016.3 2016.4

@@ -26,7 +26,6 @@
 #include "ostree.h"
 #include "ot-admin-builtins.h"
 #include "ot-admin-functions.h"
-#include "ot-main.h"
 #include "otutil.h"
 
 #include <glib/gi18n.h>
@@ -60,7 +59,7 @@ static GOptionEntry options[] = {
     "Do not apply configuration (/etc and kernel arguments) from booted deployment", NULL },
   { "retain", 0, 0, G_OPTION_ARG_NONE, &opt_retain, "Do not delete previous deployments", NULL },
   { "stage", 0, 0, G_OPTION_ARG_NONE, &opt_stage, "Complete deployment at OS shutdown", NULL },
-  { "lock-finalization", 0, G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &opt_lock_finalization,
+  { "lock-finalization", 0, 0, G_OPTION_ARG_NONE, &opt_lock_finalization,
     "Prevent automatic deployment finalization on shutdown", NULL },
   { "retain-pending", 0, 0, G_OPTION_ARG_NONE, &opt_retain_pending,
     "Do not delete pending deployments", NULL },
@@ -123,6 +122,10 @@ ot_admin_builtin_deploy (int argc, char **argv, OstreeCommandInvocation *invocat
       return FALSE;
     }
 
+  // Locking implies staging
+  if (opt_lock_finalization)
+    opt_stage = TRUE;
+
   const char *refspec = argv[1];
 
   OstreeRepo *repo = ostree_sysroot_repo (sysroot);
@@ -181,10 +184,7 @@ ot_admin_builtin_deploy (int argc, char **argv, OstreeCommandInvocation *invocat
            && (opt_kernel_argv || opt_kernel_argv_append || opt_kernel_argv_delete))
     {
       OstreeBootconfigParser *bootconfig = ostree_deployment_get_bootconfig (merge_deployment);
-      g_auto (GStrv) previous_args
-          = g_strsplit (ostree_bootconfig_parser_get (bootconfig, "options"), " ", -1);
-      kargs = ostree_kernel_args_new ();
-      ostree_kernel_args_append_argv (kargs, previous_args);
+      kargs = ostree_kernel_args_from_string (ostree_bootconfig_parser_get (bootconfig, "options"));
     }
 
   /* Now replace/extend the above set.  Note that if no options are specified,
@@ -236,6 +236,7 @@ ot_admin_builtin_deploy (int argc, char **argv, OstreeCommandInvocation *invocat
   g_auto (GStrv) kargs_strv = kargs ? ostree_kernel_args_to_strv (kargs) : NULL;
 
   OstreeSysrootDeployTreeOpts opts = {
+    .locked = opt_lock_finalization,
     .override_kernel_argv = kargs_strv,
     .overlay_initrds = overlay_initrd_chksums ? (char **)overlay_initrd_chksums->pdata : NULL,
   };
@@ -247,9 +248,11 @@ ot_admin_builtin_deploy (int argc, char **argv, OstreeCommandInvocation *invocat
         return glnx_throw (error, "--stage cannot currently be combined with --retain arguments");
       if (opt_not_as_default)
         return glnx_throw (error, "--stage cannot currently be combined with --not-as-default");
-      /* touch file *before* we stage to avoid races */
+      /* For compatibility with older versions of ostree, also write this legacy file.
+       * This can likely be safely deleted in the middle of 2024 say. */
       if (opt_lock_finalization)
         {
+          g_debug ("Writing legacy finalization lockfile");
           if (!glnx_shutil_mkdir_p_at (AT_FDCWD,
                                        dirname (strdupa (_OSTREE_SYSROOT_RUNSTATE_STAGED_LOCKED)),
                                        0755, cancellable, error))
@@ -262,7 +265,7 @@ ot_admin_builtin_deploy (int argc, char **argv, OstreeCommandInvocation *invocat
                                             _OSTREE_SYSROOT_RUNSTATE_STAGED_LOCKED);
         }
       /* use old API if we can to exercise it in CI */
-      if (!overlay_initrd_chksums)
+      if (!(overlay_initrd_chksums || opt_lock_finalization))
         {
           if (!ostree_sysroot_stage_tree (sysroot, opt_osname, revision, origin, merge_deployment,
                                           kargs_strv, &new_deployment, cancellable, error))

@@ -48,6 +48,9 @@ BUILTINPROTO (diff);
 BUILTINPROTO (switch);
 BUILTINPROTO (upgrade);
 BUILTINPROTO (kargs);
+BUILTINPROTO (post_copy);
+BUILTINPROTO (lock_finalization);
+BUILTINPROTO (state_overlay);
 
 #undef BUILTINPROTO
 

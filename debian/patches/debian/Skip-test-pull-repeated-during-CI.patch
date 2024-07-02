@@ -18,7 +18,7 @@ Signed-off-by: Simon McVittie <smcv@debian.org>
  1 file changed, 4 insertions(+)
 
 diff --git a/tests/test-pull-repeated.sh b/tests/test-pull-repeated.sh
-index 7f724c9..d10799b 100755
+index b3e0074..0c77546 100755
 --- a/tests/test-pull-repeated.sh
 +++ b/tests/test-pull-repeated.sh
 @@ -21,6 +21,10 @@ set -euo pipefail
@@ -30,5 +30,5 @@ index 7f724c9..d10799b 100755
 +fi
 +
  COMMIT_SIGN=""
- if has_gpgme; then
+ if has_ostree_feature gpgme; then
      COMMIT_SIGN="--gpg-homedir=${TEST_GPG_KEYHOME} --gpg-sign=${TEST_GPG_KEYID_1}"

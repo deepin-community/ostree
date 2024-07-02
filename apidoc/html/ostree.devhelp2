@@ -316,6 +316,7 @@
     <keyword type="function" name="ostree_sysroot_lock_finish ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-lock-finish"/>
     <keyword type="function" name="ostree_sysroot_unlock ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-unlock"/>
     <keyword type="function" name="ostree_sysroot_unload ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-unload"/>
+    <keyword type="function" name="ostree_sysroot_update_post_copy ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-update-post-copy" since="2023.11"/>
     <keyword type="function" name="ostree_sysroot_set_mount_namespace_in_use ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-set-mount-namespace-in-use" since="2020.1"/>
     <keyword type="function" name="ostree_sysroot_is_booted ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-is-booted" since="2020.1"/>
     <keyword type="function" name="ostree_sysroot_get_fd ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-get-fd"/>
@@ -346,6 +347,7 @@
     <keyword type="function" name="ostree_sysroot_stage_tree ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-stage-tree" since="2018.5"/>
     <keyword type="function" name="ostree_sysroot_stage_tree_with_options ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-stage-tree-with-options" since="2020.7"/>
     <keyword type="function" name="ostree_sysroot_stage_overlay_initrd ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-stage-overlay-initrd" since="2020.7"/>
+    <keyword type="function" name="ostree_sysroot_change_finalization ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-change-finalization" since="2023.8"/>
     <keyword type="function" name="ostree_sysroot_deploy_tree ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-deploy-tree" since="2018.5"/>
     <keyword type="function" name="ostree_sysroot_deploy_tree_with_options ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-deploy-tree-with-options" since="2020.7"/>
     <keyword type="function" name="ostree_sysroot_get_merge_deployment ()" link="ostree-Root-partition-mount-point.html#ostree-sysroot-get-merge-deployment"/>
@@ -454,6 +456,7 @@
     <keyword type="function" name="ostree_deployment_get_unlocked ()" link="ostree-ostree-deployment.html#ostree-deployment-get-unlocked" since="2016.4"/>
     <keyword type="function" name="ostree_deployment_is_pinned ()" link="ostree-ostree-deployment.html#ostree-deployment-is-pinned" since="2018.3"/>
     <keyword type="function" name="ostree_deployment_is_staged ()" link="ostree-ostree-deployment.html#ostree-deployment-is-staged" since="2018.3"/>
+    <keyword type="function" name="ostree_deployment_is_finalization_locked ()" link="ostree-ostree-deployment.html#ostree-deployment-is-finalization-locked" since="2023.8"/>
     <keyword type="function" name="ostree_deployment_set_index ()" link="ostree-ostree-deployment.html#ostree-deployment-set-index"/>
     <keyword type="function" name="ostree_deployment_set_bootserial ()" link="ostree-ostree-deployment.html#ostree-deployment-set-bootserial"/>
     <keyword type="function" name="ostree_deployment_set_bootconfig ()" link="ostree-ostree-deployment.html#ostree-deployment-set-bootconfig"/>
@@ -669,6 +672,7 @@
     <keyword type="member" name="OstreeDeployment.origin" link="ostree-ostree-deployment.html#OstreeDeployment.origin"/>
     <keyword type="member" name="OstreeDeployment.unlocked" link="ostree-ostree-deployment.html#OstreeDeployment.unlocked"/>
     <keyword type="member" name="OstreeDeployment.staged" link="ostree-ostree-deployment.html#OstreeDeployment.staged"/>
+    <keyword type="member" name="OstreeDeployment.finalization-locked" link="ostree-ostree-deployment.html#OstreeDeployment.finalization-locked"/>
     <keyword type="member" name="OstreeDeployment.overlay-initrds" link="ostree-ostree-deployment.html#OstreeDeployment.overlay-initrds"/>
     <keyword type="member" name="OstreeDeployment.overlay-initrds-id" link="ostree-ostree-deployment.html#OstreeDeployment.overlay-initrds-id"/>
   </functions>
