@@ -1,0 +1,52 @@
+--- a/src/libostree/ostree-sysroot.c
++++ b/src/libostree/ostree-sysroot.c
+@@ -764,6 +764,33 @@
+                           ostree_deployment_get_deployserial (deployment), key);
+ }
+ 
++static gboolean is_sysroot_booted_overlay(gchar* ostree) {
++    g_autofree gchar * txt;
++    g_file_get_contents("/proc/mounts", &txt,NULL,NULL);
++
++    gboolean is_sysroot_overlay = FALSE;
++    g_auto (GStrv) lines = g_strsplit (txt, "\n", -1);
++    for (char **iter = lines; *iter; iter++) {
++        const char *line = *iter;
++        g_auto (GStrv)items = g_strsplit_set (line, " ", 6);
++        if(g_strv_length (items) == 6 && \
++            g_str_equal(items[1], "/") && g_str_equal(items[2],"overlay")) {
++            g_auto (GStrv) opts = g_strsplit(items[3], ",", -1);
++            for (char **iter_opt = opts; *iter_opt; iter_opt++) {
++                if(g_str_has_prefix(*iter_opt, "upperdir=")) {
++                    g_autofree gchar* upperdir = g_strdup((*iter_opt) + 9);
++                    g_debug("upperdir=%s", upperdir);
++                    if(g_str_has_suffix(upperdir, ostree)) {
++                        is_sysroot_overlay = TRUE;
++                    }
++                }
++            }
++        }
++    }
++
++    return is_sysroot_overlay;
++}
++
+ static gboolean
+ parse_deployment (OstreeSysroot *self, const char *boot_link, OstreeDeployment **out_deployment,
+                   GCancellable *cancellable, GError **error)
+@@ -835,12 +862,14 @@
+       else
+         g_debug ("Target rootdev key %s found", OTCORE_RUN_BOOTED_KEY_BACKING_ROOTDEVINO);
+ 
++      gboolean overlay_booted = is_sysroot_booted_overlay(deploy_basename);
++      g_debug("overlay_booted: %d", overlay_booted);
+       /* A bit ugly, we're assigning to a sysroot-owned variable from deep in
+        * this parsing code. But eh, if something fails the sysroot state can't
+        * be relied on anyways.
+        */
+       is_booted_deployment
+-          = stbuf.st_dev == expected_root_dev && stbuf.st_ino == expected_root_inode;
++          = (stbuf.st_dev == expected_root_dev && stbuf.st_ino == expected_root_inode) || overlay_booted;
+     }
+ 
+   g_autoptr (OstreeDeployment) ret_deployment

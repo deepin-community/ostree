@@ -1,3 +1,9 @@
+ostree (2024.6-1deepin1) unstable; urgency=medium
+
+  * support deploy when root is an overlayfs
+
+ -- xiamengliang <xiamengliang@uniontech.com>  Thu, 08 Aug 2024 14:25:11 +0800
+
 ostree (2024.6-1) unstable; urgency=medium
 
   * New upstream release
