@@ -1,3 +1,10 @@
+ostree (2024.6-1deepin2) unstable; urgency=medium
+
+  * curl: Make socket callback during cleanup into no-op.
+  * form: https://github.com/ostreedev/ostree/pull/3307/commits/4d755a85225ea0a02d4580d088bb8a97138cb040
+
+ -- LiChengGang <lichenggang@uniontech.com>  Mon, 23 Sep 2024 16:50:05 +0800
+
 ostree (2024.6-1deepin1) unstable; urgency=medium
 
   * support deploy when root is an overlayfs
