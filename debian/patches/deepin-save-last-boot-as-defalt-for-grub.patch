@@ -1,0 +1,43 @@
+Index: ostree-fork-from-deepin/src/boot/grub2/grub2-15_ostree
+===================================================================
+--- ostree-fork-from-deepin.orig/src/boot/grub2/grub2-15_ostree
++++ ostree-fork-from-deepin/src/boot/grub2/grub2-15_ostree
+@@ -62,4 +62,9 @@ export GRUB2_BOOT_DEVICE_ID
+ GRUB2_PREPARE_ROOT_CACHE="$(prepare_grub_to_access_device ${DEVICE})"
+ export GRUB2_PREPARE_ROOT_CACHE
+ 
++if [ "x${GRUB_SAVEDEFAULT}" = "xtrue" ] ; then 
++   OSTREE_SAVEDEFAULT='true'
++   export OSTREE_SAVEDEFAULT
++fi
++
+ exec ostree admin instutil grub2-generate
+Index: ostree-fork-from-deepin/src/libostree/ostree-bootloader-grub2.c
+===================================================================
+--- ostree-fork-from-deepin.orig/src/libostree/ostree-bootloader-grub2.c
++++ ostree-fork-from-deepin/src/libostree/ostree-bootloader-grub2.c
+@@ -177,6 +177,7 @@ _ostree_bootloader_grub2_generate_config
+   /* So... yeah.  Just going to hardcode these. */
+   static const char hardcoded_video[] = "load_video\n"
+                                         "set gfxpayload=keep\n";
++  static const char hardcoded_savedefault[] = "savedefault\n";
+   static const char hardcoded_insmods[] = "insmod gzio\n";
+   const char *grub2_boot_device_id = g_getenv ("GRUB2_BOOT_DEVICE_ID");
+   const char *grub2_prepare_root_cache = g_getenv ("GRUB2_PREPARE_ROOT_CACHE");
+@@ -187,6 +188,7 @@ _ostree_bootloader_grub2_generate_config
+ 
+   /* Passed from the parent */
+   gboolean is_efi = g_getenv ("_OSTREE_GRUB2_IS_EFI") != NULL;
++  gboolean savedefault = g_getenv ("OSTREE_SAVEDEFAULT") != NULL;
+ 
+   g_autoptr (GOutputStream) out_stream = g_unix_output_stream_new (target_fd, FALSE);
+ 
+@@ -226,6 +228,8 @@ _ostree_bootloader_grub2_generate_config
+ 
+       /* Hardcoded sections */
+       g_string_append (output, hardcoded_video);
++      if (savedefault)
++        g_string_append (output, hardcoded_savedefault);
+       g_string_append (output, hardcoded_insmods);
+       g_string_append (output, grub2_prepare_root_cache);
+       g_string_append_c (output, '\n');
