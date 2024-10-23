@@ -1,7 +1,7 @@
-diff --git a/src/libostree/ostree-bootloader-grub2.c b/src/libostree/ostree-bootloader-grub2.c
-index cbe7605..2015bf5 100644
---- a/src/libostree/ostree-bootloader-grub2.c
-+++ b/src/libostree/ostree-bootloader-grub2.c
+Index: ostree/src/libostree/ostree-bootloader-grub2.c
+===================================================================
+--- ostree.orig/src/libostree/ostree-bootloader-grub2.c
++++ ostree/src/libostree/ostree-bootloader-grub2.c
 @@ -25,6 +25,8 @@
  #include <sys/mount.h>
  
@@ -11,7 +11,7 @@ index cbe7605..2015bf5 100644
  
  // Written by bootupd
  #define BOOTUPD_CONFIG "boot/bootupd-state.json"
-@@ -166,6 +168,67 @@ _ostree_bootloader_grub2_get_name (OstreeBootloader *bootloader)
+@@ -166,6 +168,71 @@ _ostree_bootloader_grub2_get_name (Ostre
    return "grub2";
  }
  
@@ -43,7 +43,11 @@ index cbe7605..2015bf5 100644
 +{
 +  GPtrArray *deployments = sysroot->deployments;
 +
-+  if (index >= deployments->len)
++  /* Check if the index exceeds the deployment array length, allowing one extra
++   * index if 'stage_deploy_time' is true.
++   * For the first time to boot, index could be 1 even if there's only one deployment.
++   */
++  if (index >= deployments->len + (stage_deploy_time ? 1 : 0))
 +    return title;
 +
 +  g_autofree char *deploy_time = NULL;
@@ -79,7 +83,7 @@ index cbe7605..2015bf5 100644
  /* This implementation is quite complex; see this issue for
   * a starting point:
   * https://github.com/ostreedev/ostree/issues/717
-@@ -180,6 +243,7 @@ _ostree_bootloader_grub2_generate_config (OstreeSysroot *sysroot, int bootversio
+@@ -181,6 +248,7 @@ _ostree_bootloader_grub2_generate_config
    static const char hardcoded_insmods[] = "insmod gzio\n";
    const char *grub2_boot_device_id = g_getenv ("GRUB2_BOOT_DEVICE_ID");
    const char *grub2_prepare_root_cache = g_getenv ("GRUB2_PREPARE_ROOT_CACHE");
@@ -87,7 +91,7 @@ index cbe7605..2015bf5 100644
  
    /* We must have been called via the wrapper script */
    g_assert (grub2_boot_device_id != NULL);
-@@ -214,6 +278,7 @@ _ostree_bootloader_grub2_generate_config (OstreeSysroot *sysroot, int bootversio
+@@ -216,6 +284,7 @@ _ostree_bootloader_grub2_generate_config
  
        kernel = ostree_bootconfig_parser_get (config, "linux");
  
@@ -95,7 +99,7 @@ index cbe7605..2015bf5 100644
        quoted_title = g_shell_quote (title);
        uuid = g_strdup_printf ("ostree-%u-%s", (guint)i, grub2_boot_device_id);
        quoted_uuid = g_shell_quote (uuid);
-@@ -285,6 +350,8 @@ typedef struct
+@@ -289,6 +358,8 @@ typedef struct
  {
    const char *root;
    const char *bootversion_str;
@@ -104,7 +108,7 @@ index cbe7605..2015bf5 100644
    gboolean is_efi;
  } Grub2ChildSetupData;
  
-@@ -299,6 +366,8 @@ grub2_child_setup (gpointer user_data)
+@@ -303,6 +374,8 @@ grub2_child_setup (gpointer user_data)
    if (cdata->is_efi)
      setenv ("_OSTREE_GRUB2_IS_EFI", "1", TRUE);
  
@@ -113,7 +117,7 @@ index cbe7605..2015bf5 100644
    /* Everything below this is dealing with the chroot case; if
     * we're not doing that, return early.
     */
-@@ -425,6 +494,11 @@ _ostree_bootloader_grub2_write_config (OstreeBootloader *bootloader, int bootver
+@@ -429,6 +502,11 @@ _ostree_bootloader_grub2_write_config (O
    g_autofree char *bootversion_str = g_strdup_printf ("%u", (guint)bootversion);
    cdata.bootversion_str = bootversion_str;
    cdata.is_efi = self->is_efi;
@@ -125,3 +129,21 @@ index cbe7605..2015bf5 100644
    /* Note in older versions of the grub2 package, this script doesn't even try
       to be atomic; it just does:
  
+Index: ostree/src/libostree/ostree-sysroot-deploy.c
+===================================================================
+--- ostree.orig/src/libostree/ostree-sysroot-deploy.c
++++ ostree/src/libostree/ostree-sysroot-deploy.c
+@@ -3022,6 +3022,13 @@ ostree_sysroot_write_deployments_with_op
+         return FALSE;
+ 
+       bootloader_is_atomic = TRUE;
++
++      g_autofree gchar *error_output = NULL;
++      gboolean ret = g_spawn_command_line_sync("update-grub", NULL, &error_output, NULL, NULL);
++      if (ret)
++        ot_journal_print(LOG_INFO, "update grub configuration successfully");
++      else
++        ot_journal_print(LOG_ERR, "failed to update grub configuration: %s", error_output);
+     }
+   else
+     {
