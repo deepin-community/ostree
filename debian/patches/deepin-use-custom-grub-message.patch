@@ -133,17 +133,38 @@ Index: ostree/src/libostree/ostree-sysroot-deploy.c
 ===================================================================
 --- ostree.orig/src/libostree/ostree-sysroot-deploy.c
 +++ ostree/src/libostree/ostree-sysroot-deploy.c
-@@ -3022,6 +3022,13 @@ ostree_sysroot_write_deployments_with_op
+@@ -2842,6 +2842,25 @@ auto_early_prune_old_deployments (Ostree
+   return TRUE;
+ }
+ 
++static void
++ostree_update_grub_configuration(OstreeSysroot *self)
++{
++  g_autoptr(OstreeBootloader) bootloader = NULL;
++  g_autoptr(GError) error = NULL;
++  g_autoptr(GCancellable) cancellable = NULL;
++
++  if (!_ostree_sysroot_query_bootloader(self, &bootloader, cancellable, &error)
++      || !bootloader || g_strcmp0(_ostree_bootloader_get_name(bootloader), "grub2") != 0)
++    return;
++
++  g_autofree gchar *error_output = NULL;
++  gboolean ret = g_spawn_command_line_sync("update-grub", NULL, &error_output, NULL, NULL);
++  if (ret)
++    ot_journal_print(LOG_INFO, "update grub configuration successfully");
++  else
++    ot_journal_print(LOG_ERR, "failed to update grub configuration: %s", error_output);
++}
++
+ /**
+  * ostree_sysroot_write_deployments_with_options:
+  * @self: Sysroot
+@@ -3022,6 +3041,8 @@ ostree_sysroot_write_deployments_with_op
          return FALSE;
  
        bootloader_is_atomic = TRUE;
 +
-+      g_autofree gchar *error_output = NULL;
-+      gboolean ret = g_spawn_command_line_sync("update-grub", NULL, &error_output, NULL, NULL);
-+      if (ret)
-+        ot_journal_print(LOG_INFO, "update grub configuration successfully");
-+      else
-+        ot_journal_print(LOG_ERR, "failed to update grub configuration: %s", error_output);
++      ostree_update_grub_configuration(self);
      }
    else
      {
