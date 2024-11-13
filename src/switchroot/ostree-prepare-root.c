@@ -113,14 +113,11 @@ sysroot_is_configured_ro (const char *sysroot)
 }
 
 static char *
-resolve_deploy_path (const char *root_mountpoint)
+resolve_deploy_path (const char *kernel_cmdline, const char *root_mountpoint)
 {
   char destpath[PATH_MAX];
   struct stat stbuf;
   char *deploy_path;
-  g_autofree char *kernel_cmdline = read_proc_cmdline ();
-  if (!kernel_cmdline)
-    errx (EXIT_FAILURE, "Failed to read kernel cmdline");
 
   g_autoptr (GError) error = NULL;
   g_autofree char *ostree_target = NULL;
@@ -166,6 +163,8 @@ load_variant (const char *root_mountpoint, const char *digest, const char *exten
   return g_variant_ref_sink (g_variant_new_from_data (type, data, data_size, FALSE, g_free, data));
 }
 
+// Given a mount point, directly load the .commit object.  At the current time this tool
+// doesn't link to libostree.
 static gboolean
 load_commit_for_deploy (const char *root_mountpoint, const char *deploy_path, GVariant **commit_out,
                         GVariant **commitmeta_out, GError **error)
@@ -198,6 +197,14 @@ load_commit_for_deploy (const char *root_mountpoint, const char *deploy_path, GV
   return TRUE;
 }
 
+/**
+ * validate_signature:
+ * @data: The raw data whose signature must be validated
+ * @signatures: A variant of type "ay" (byte array) containing signatures
+ * @pubkeys: an array of type GBytes*
+ *
+ * Verify that @data is signed using @signatures and @pubkeys.
+ */
 static gboolean
 validate_signature (GBytes *data, GVariant *signatures, GPtrArray *pubkeys)
 {
@@ -219,6 +226,7 @@ validate_signature (GBytes *data, GVariant *signatures, GPtrArray *pubkeys)
 
           if (!otcore_validate_ed25519_signature (data, pubkey, signature, &valid, &local_error))
             errx (EXIT_FAILURE, "signature verification failed: %s", local_error->message);
+          // At least one valid signature is enough.
           if (valid)
             return TRUE;
         }
@@ -257,6 +265,10 @@ main (int argc, char *argv[])
     err (EXIT_FAILURE, "usage: ostree-prepare-root SYSROOT");
   const char *root_arg = argv[1];
 
+  g_autofree char *kernel_cmdline = read_proc_cmdline ();
+  if (!kernel_cmdline)
+    errx (EXIT_FAILURE, "Failed to read kernel cmdline");
+
   // Since several APIs want to operate in terms of file descriptors, let's
   // open the initramfs now.  Currently this is just used for the config parser.
   glnx_autofd int initramfs_rootfs_fd = -1;
@@ -278,7 +290,7 @@ main (int argc, char *argv[])
   // We always parse the composefs config, because we want to detect and error
   // out if it's enabled, but not supported at compile time.
   g_autoptr (ComposefsConfig) composefs_config
-      = otcore_load_composefs_config (config, TRUE, &error);
+      = otcore_load_composefs_config (kernel_cmdline, config, TRUE, &error);
   if (!composefs_config)
     errx (EXIT_FAILURE, "%s", error->message);
 
@@ -297,13 +309,14 @@ main (int argc, char *argv[])
   const char *root_mountpoint = realpath (root_arg, NULL);
   if (root_mountpoint == NULL)
     err (EXIT_FAILURE, "realpath(\"%s\")", root_arg);
-  g_autofree char *deploy_path = resolve_deploy_path (root_mountpoint);
+  g_autofree char *deploy_path = resolve_deploy_path (kernel_cmdline, root_mountpoint);
   const char *deploy_directory_name = glnx_basename (deploy_path);
   // Note that realpath() should have stripped any trailing `/` which shouldn't
   // be in the karg to start with, but we assert here to be sure we have a non-empty
   // filename.
   g_assert (deploy_directory_name && *deploy_directory_name);
 
+  /* These are global state directories underneath /run */
   if (mkdirat (AT_FDCWD, OTCORE_RUN_OSTREE, 0755) < 0)
     err (EXIT_FAILURE, "Failed to create %s", OTCORE_RUN_OSTREE);
   if (mkdirat (AT_FDCWD, OTCORE_RUN_OSTREE_PRIVATE, 0) < 0)
@@ -358,7 +371,7 @@ main (int argc, char *argv[])
   bool using_composefs = false;
 
 #ifdef HAVE_COMPOSEFS
-  /* We construct the new sysroot in /sysroot.tmp, which is either the composfs
+  /* We construct the new sysroot in /sysroot.tmp, which is either the composefs
      mount or a bind mount of the deploy-dir */
   if (composefs_config->enabled != OT_TRISTATE_NO)
     {
@@ -488,13 +501,6 @@ main (int argc, char *argv[])
   g_variant_builder_add (&metadata_builder, "{sv}", OTCORE_RUN_BOOTED_KEY_ROOT_TRANSIENT,
                          g_variant_new_boolean (root_transient));
 
-  /* This will result in a system with /sysroot read-only. Thus, two additional
-   * writable bind-mounts (for /etc and /var) are required later on. */
-  if (sysroot_readonly)
-    {
-      if (!sysroot_currently_writable)
-        errx (EXIT_FAILURE, OTCORE_SYSROOT_NOT_WRITEABLE, root_arg);
-    }
   /* Pass on the state for use by ostree-prepare-root */
   g_variant_builder_add (&metadata_builder, "{sv}", OTCORE_RUN_BOOTED_KEY_SYSROOT_RO,
                          g_variant_new_boolean (sysroot_readonly));
@@ -525,6 +531,7 @@ main (int argc, char *argv[])
                                                 &etc_transient, &error))
         errx (EXIT_FAILURE, "Failed to parse etc.transient value: %s", error->message);
 
+      static const char *tmp_sysroot_etc = TMP_SYSROOT "/etc";
       if (etc_transient)
         {
           char *ovldir = "/run/ostree/transient-etc";
@@ -552,16 +559,15 @@ main (int argc, char *argv[])
 
           g_autofree char *ovl_options
               = g_strdup_printf ("lowerdir=%s,upperdir=%s,workdir=%s", lowerdir, upperdir, workdir);
-          if (mount ("overlay", TMP_SYSROOT "/etc", "overlay", MS_SILENT, ovl_options) < 0)
+          if (mount ("overlay", tmp_sysroot_etc, "overlay", MS_SILENT, ovl_options) < 0)
             err (EXIT_FAILURE, "failed to mount transient etc overlayfs");
         }
       else
         {
           /* Bind-mount /etc (at deploy path), and remount as writable. */
-          if (mount ("etc", TMP_SYSROOT "/etc", NULL, MS_BIND | MS_SILENT, NULL) < 0)
+          if (mount ("etc", tmp_sysroot_etc, NULL, MS_BIND | MS_SILENT, NULL) < 0)
             err (EXIT_FAILURE, "failed to prepare /etc bind-mount at /sysroot.tmp/etc");
-          if (mount (TMP_SYSROOT "/etc", TMP_SYSROOT "/etc", NULL, MS_BIND | MS_REMOUNT | MS_SILENT,
-                     NULL)
+          if (mount (tmp_sysroot_etc, tmp_sysroot_etc, NULL, MS_BIND | MS_REMOUNT | MS_SILENT, NULL)
               < 0)
             err (EXIT_FAILURE, "failed to make writable /etc bind-mount at /sysroot.tmp/etc");
         }
@@ -631,6 +637,16 @@ main (int argc, char *argv[])
     {
       if (mount ("../../var", TMP_SYSROOT "/var", NULL, MS_BIND | MS_SILENT, NULL) < 0)
         err (EXIT_FAILURE, "failed to bind mount ../../var to var");
+
+      /* To avoid having submounts of /var propagate into $stateroot/var, the
+       * mount is made with slave+shared propagation. See the comment in
+       * ostree-impl-system-generator.c when /var isn't mounted in the
+       * initramfs for further explanation.
+       */
+      if (mount (NULL, TMP_SYSROOT "/var", NULL, MS_SLAVE | MS_SILENT, NULL) < 0)
+        err (EXIT_FAILURE, "failed to change /var to slave mount");
+      if (mount (NULL, TMP_SYSROOT "/var", NULL, MS_SHARED | MS_SILENT, NULL) < 0)
+        err (EXIT_FAILURE, "failed to change /var to slave+shared mount");
     }
 
   /* This can be used by other things to signal ostree is in use */
@@ -663,30 +679,16 @@ main (int argc, char *argv[])
   if (rmdir (TMP_SYSROOT) < 0)
     err (EXIT_FAILURE, "couldn't remove temporary sysroot %s", TMP_SYSROOT);
 
+  /* Now that we've set up all the mount points, if configured we remount the physical
+   * rootfs as read-only; what is visibly mutable to the OS by default is just /etc and /var.
+   * But ostree knows how to mount /boot and /sysroot read-write to perform operations.
+   */
   if (sysroot_readonly)
     {
       if (mount ("sysroot", "sysroot", NULL, MS_BIND | MS_REMOUNT | MS_RDONLY | MS_SILENT, NULL)
           < 0)
         err (EXIT_FAILURE, "failed to make /sysroot read-only");
-
-      /* TODO(lucab): This will make the final '/' read-only.
-       * Stabilize read-only '/sysroot' first, then enable this additional hardening too.
-       *
-       * if (mount (".", ".", NULL, MS_BIND | MS_REMOUNT | MS_RDONLY | MS_SILENT, NULL) < 0)
-       *   err (EXIT_FAILURE, "failed to make / read-only");
-       */
     }
-
-  /* The /sysroot mount needs to be private to avoid having a mount for e.g. /var/cache
-   * also propagate to /sysroot/ostree/deploy/$stateroot/var/cache
-   *
-   * Now in reality, today this is overridden by systemd: the *actual* way we fix this up
-   * is in ostree-remount.c.  But let's do it here to express the semantics we want
-   * at the very start (perhaps down the line systemd will have compile/runtime option
-   * to say that the initramfs environment did everything right from the start).
-   */
-  if (mount ("none", "sysroot", NULL, MS_PRIVATE | MS_SILENT, NULL) < 0)
-    err (EXIT_FAILURE, "remounting 'sysroot' private");
 
   exit (EXIT_SUCCESS);
 }

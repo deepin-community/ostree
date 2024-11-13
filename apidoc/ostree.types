@@ -1,3 +1,5 @@
+_ostree_sign_dummy_get_type
+_ostree_sign_ed25519_get_type
 ostree_async_progress_get_type
 ostree_bloom_get_type
 ostree_bootconfig_parser_get_type

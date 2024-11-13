@@ -1,33 +1,56 @@
-ostree (2024.6-1deepin5) unstable; urgency=medium
+ostree (2024.9-1) unstable; urgency=medium
 
-  * fix: ensure update boot configuration for each deployment.
+  * New upstream release
+  * d/p/tests-Work-around-GPG-2.2.45-error-behaviour-when-revokin.patch:
+    Drop patch, applied upstream
 
- -- lichenggang <lichenggang@deepin.org>  Thu, 24 Oct 2024 09:55:46 +0800
+ -- Simon McVittie <smcv@debian.org>  Tue, 12 Nov 2024 09:27:19 +0000
 
-ostree (2024.6-1deepin4) unstable; urgency=medium
+ostree (2024.8-2) unstable; urgency=medium
 
-  * use a custom grub message
+  * d/p/tests-Work-around-GPG-2.2.45-error-behaviour-when-revokin.patch:
+    Add proposed patch to work around a test failure with gnupg 2.2.45
+    (Mitigates: #1086140)
 
- -- wangzhaohui <wangzhaohui@uniontech.com>  Sat, 12 Oct 2024 15:21:52 +0800
+ -- Simon McVittie <smcv@debian.org>  Thu, 31 Oct 2024 11:00:06 +0000
 
-ostree (2024.6-1deepin3) unstable; urgency=medium
+ostree (2024.8-1) unstable; urgency=medium
 
-  * use last boot as default if GRUB_SAVEDEFAULT set in grub
+  * New upstream release
+  * d/p/curl-Assert-that-curl_multi_assign-worked.patch,
+    d/p/curl-Make-socket-callback-during-cleanup-into-no-op.patch:
+    Drop patches that were included in the new upstream release
 
- -- ssk-wh <fanpengcheng@uniontech.com>  Tue, 08 Oct 2024 14:33:59 +0800
+ -- Simon McVittie <smcv@debian.org>  Sat, 21 Sep 2024 18:49:10 +0100
 
-ostree (2024.6-1deepin2) unstable; urgency=medium
+ostree (2024.7-3) unstable; urgency=high
 
-  * curl: Make socket callback during cleanup into no-op.
-  * form: https://github.com/ostreedev/ostree/pull/3307/commits/4d755a85225ea0a02d4580d088bb8a97138cb040
+  * d/p/curl-Assert-that-curl_multi_assign-worked.patch,
+    d/p/curl-Make-socket-callback-during-cleanup-into-no-op.patch:
+    Add patches from upstream to avoid libflatpak crash with curl 8.10.x
+    (Closes: #1082121)
+  * d/copyright: Remove obsolete stanzas
+  * Standards-Version: 4.7.0 (no changes required)
+  * Set high urgency since the version of libcurl that triggered the
+    regression has already migrated
 
- -- LiChengGang <lichenggang@uniontech.com>  Mon, 23 Sep 2024 16:50:05 +0800
+ -- Simon McVittie <smcv@debian.org>  Thu, 19 Sep 2024 09:57:08 +0100
 
-ostree (2024.6-1deepin1) unstable; urgency=medium
+ostree (2024.7-2) unstable; urgency=medium
 
-  * support deploy when root is an overlayfs
+  * d/control, d/rules: Disable gjs-based tests on armel.
+    It's looking as though mozjs128, and therefore the next gjs release,
+    will not support armel due to its lack of atomic instructions causing
+    relatively basic features to be disabled. (Helps: #1080521)
 
- -- xiamengliang <xiamengliang@uniontech.com>  Thu, 08 Aug 2024 14:25:11 +0800
+ -- Simon McVittie <smcv@debian.org>  Fri, 06 Sep 2024 18:16:11 +0100
+
+ostree (2024.7-1) unstable; urgency=medium
+
+  * New upstream release
+    - debian/libostree-1-1.symbols: Update
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 22 Jul 2024 10:21:26 +0100
 
 ostree (2024.6-1) unstable; urgency=medium
 

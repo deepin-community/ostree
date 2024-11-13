@@ -219,6 +219,7 @@
     <keyword type="function" name="ostree_repo_checkout_tree ()" link="ostree-OstreeRepo.html#ostree-repo-checkout-tree"/>
     <keyword type="function" name="ostree_repo_checkout_tree_at ()" link="ostree-OstreeRepo.html#ostree-repo-checkout-tree-at" deprecated=""/>
     <keyword type="function" name="ostree_repo_checkout_at ()" link="ostree-OstreeRepo.html#ostree-repo-checkout-at" since="2016.8"/>
+    <keyword type="function" name="ostree_repo_checkout_composefs ()" link="ostree-OstreeRepo.html#ostree-repo-checkout-composefs"/>
     <keyword type="function" name="ostree_repo_checkout_gc ()" link="ostree-OstreeRepo.html#ostree-repo-checkout-gc"/>
     <keyword type="function" name="ostree_repo_read_commit ()" link="ostree-OstreeRepo.html#ostree-repo-read-commit"/>
     <keyword type="function" name="ostree_repo_list_objects ()" link="ostree-OstreeRepo.html#ostree-repo-list-objects"/>

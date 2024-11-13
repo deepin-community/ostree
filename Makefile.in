@@ -2098,11 +2098,12 @@ am__EXEEXT_23 = tests/test-basic.sh \
 	tests/test-cli-extensions.sh tests/test-pull-subpath.sh \
 	tests/test-archivez.sh tests/test-remote-add.sh \
 	tests/test-remote-headers.sh tests/test-remote-refs.sh \
-	tests/test-composefs.sh tests/test-commit-sign.sh \
-	tests/test-commit-timestamp.sh tests/test-export.sh \
-	tests/test-help.sh tests/test-libarchive.sh \
-	tests/test-parent.sh tests/test-pull-bare.sh \
-	tests/test-pull-bareuser.sh tests/test-pull-bareuseronly.sh \
+	tests/test-composefs.sh tests/test-payload-link.sh \
+	tests/test-commit-sign.sh tests/test-commit-timestamp.sh \
+	tests/test-export.sh tests/test-help.sh \
+	tests/test-libarchive.sh tests/test-parent.sh \
+	tests/test-pull-bare.sh tests/test-pull-bareuser.sh \
+	tests/test-pull-bareuseronly.sh \
 	tests/test-pull2-bareuseronly.sh \
 	tests/test-pull-commit-only.sh tests/test-pull-depth.sh \
 	tests/test-pull-mirror-summary.sh \
@@ -2846,7 +2847,9 @@ libostree_1_la_SOURCES = src/libostree/ostree-async-progress.c \
 symbol_files = $(top_srcdir)/src/libostree/libostree-released.sym
 
 # Uncomment this include when adding new development symbols.
+#if BUILDOPT_IS_DEVEL_BUILD
 #symbol_files += $(top_srcdir)/src/libostree/libostree-devel.sym
+#endif
 
 # http://blog.jgc.org/2007/06/escaping-comma-and-space-in-gnu-make.html
 wl_versionscript_arg = -Wl,--version-script=
@@ -3011,11 +3014,12 @@ _installed_or_uninstalled_test_scripts = tests/test-basic.sh \
 	tests/test-cli-extensions.sh tests/test-pull-subpath.sh \
 	tests/test-archivez.sh tests/test-remote-add.sh \
 	tests/test-remote-headers.sh tests/test-remote-refs.sh \
-	tests/test-composefs.sh tests/test-commit-sign.sh \
-	tests/test-commit-timestamp.sh tests/test-export.sh \
-	tests/test-help.sh tests/test-libarchive.sh \
-	tests/test-parent.sh tests/test-pull-bare.sh \
-	tests/test-pull-bareuser.sh tests/test-pull-bareuseronly.sh \
+	tests/test-composefs.sh tests/test-payload-link.sh \
+	tests/test-commit-sign.sh tests/test-commit-timestamp.sh \
+	tests/test-export.sh tests/test-help.sh \
+	tests/test-libarchive.sh tests/test-parent.sh \
+	tests/test-pull-bare.sh tests/test-pull-bareuser.sh \
+	tests/test-pull-bareuseronly.sh \
 	tests/test-pull2-bareuseronly.sh \
 	tests/test-pull-commit-only.sh tests/test-pull-depth.sh \
 	tests/test-pull-mirror-summary.sh \
@@ -8650,6 +8654,13 @@ tests/test-remote-refs.sh.log: tests/test-remote-refs.sh
 tests/test-composefs.sh.log: tests/test-composefs.sh
 	@p='tests/test-composefs.sh'; \
 	b='tests/test-composefs.sh'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tests/test-payload-link.sh.log: tests/test-payload-link.sh
+	@p='tests/test-payload-link.sh'; \
+	b='tests/test-payload-link.sh'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \

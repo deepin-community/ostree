@@ -90,8 +90,18 @@ static void
 relabel_dir_for_upper (const char *upper_path, const char *real_path, gboolean is_dir)
 {
 #ifdef HAVE_SELINUX
+  /* Ignore ENOENT, because if there is no file to relabel we can continue,
+   * systemd-sysusers runs in parallel and can create temporary files in /etc
+   * causing failures like:
+   * "Failed to relabel /etc/.#gshadowJzu4Rx: No such file or directory"
+   */
   if (selinux_restorecon (real_path, 0))
-    err (EXIT_FAILURE, "Failed to relabel %s", real_path);
+    {
+      if (errno == ENOENT)
+        return;
+
+      err (EXIT_FAILURE, "Failed to relabel %s", real_path);
+    }
 
   if (!is_dir)
     return;
@@ -156,15 +166,6 @@ main (int argc, char *argv[])
       }
   }
   g_autoptr (GVariantDict) ostree_run_metadata = g_variant_dict_new (ostree_run_metadata_v);
-
-  /* The /sysroot mount needs to be private to avoid having a mount for e.g. /var/cache
-   * also propagate to /sysroot/ostree/deploy/$stateroot/var/cache
-   *
-   * Today systemd remounts / (recursively) as shared, so we're undoing that as early
-   * as possible.  See also a copy of this in ostree-prepare-root.c.
-   */
-  if (mount ("none", "/sysroot", NULL, MS_REC | MS_PRIVATE, NULL) < 0)
-    perror ("warning: While remounting /sysroot MS_PRIVATE");
 
   const char *transient_etc = NULL;
   g_variant_dict_lookup (ostree_run_metadata, OTCORE_RUN_BOOTED_KEY_TRANSIENT_ETC, "&s",

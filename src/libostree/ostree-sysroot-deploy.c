@@ -184,8 +184,8 @@ install_into_boot (OstreeRepo *repo, OstreeSePolicy *sepolicy, int src_dfd, cons
 /* Copy ownership, mode, and xattrs from source directory to destination */
 static gboolean
 dirfd_copy_attributes_and_xattrs (int src_parent_dfd, const char *src_name, int src_dfd,
-                                  int dest_dfd, OstreeSysrootDebugFlags flags,
-                                  GCancellable *cancellable, GError **error)
+                                  int dest_dfd, GLnxFileCopyFlags flags, GCancellable *cancellable,
+                                  GError **error)
 {
   g_autoptr (GVariant) xattrs = NULL;
 
@@ -193,7 +193,7 @@ dirfd_copy_attributes_and_xattrs (int src_parent_dfd, const char *src_name, int 
    * right.  This will allow other users access if they have ACLs, but
    * oh well.
    */
-  if (!(flags & OSTREE_SYSROOT_DEBUG_NO_XATTRS))
+  if (!(flags & GLNX_FILE_COPY_NOXATTRS))
     {
       if (!glnx_dfd_name_get_all_xattrs (src_parent_dfd, src_name, &xattrs, cancellable, error))
         return FALSE;
@@ -284,7 +284,7 @@ checksum_dir_recurse (int dfd, const char *path, OtChecksum *checksum, GCancella
 
 static gboolean
 copy_dir_recurse (int src_parent_dfd, int dest_parent_dfd, const char *name,
-                  OstreeSysrootDebugFlags flags, GCancellable *cancellable, GError **error)
+                  GLnxFileCopyFlags copy_flags, GCancellable *cancellable, GError **error)
 {
   g_auto (GLnxDirFdIterator) src_dfd_iter = {
     0,
@@ -302,8 +302,8 @@ copy_dir_recurse (int src_parent_dfd, int dest_parent_dfd, const char *name,
   if (!glnx_opendirat (dest_parent_dfd, name, TRUE, &dest_dfd, error))
     return FALSE;
 
-  if (!dirfd_copy_attributes_and_xattrs (src_parent_dfd, name, src_dfd_iter.fd, dest_dfd, flags,
-                                         cancellable, error))
+  if (!dirfd_copy_attributes_and_xattrs (src_parent_dfd, name, src_dfd_iter.fd, dest_dfd,
+                                         copy_flags, cancellable, error))
     return glnx_prefix_error (error, "Copying attributes of %s", name);
 
   while (TRUE)
@@ -320,7 +320,7 @@ copy_dir_recurse (int src_parent_dfd, int dest_parent_dfd, const char *name,
 
       if (S_ISDIR (child_stbuf.st_mode))
         {
-          if (!copy_dir_recurse (src_dfd_iter.fd, dest_dfd, dent->d_name, flags, cancellable,
+          if (!copy_dir_recurse (src_dfd_iter.fd, dest_dfd, dent->d_name, copy_flags, cancellable,
                                  error))
             return FALSE;
         }
@@ -329,8 +329,7 @@ copy_dir_recurse (int src_parent_dfd, int dest_parent_dfd, const char *name,
           if (S_ISLNK (child_stbuf.st_mode) || S_ISREG (child_stbuf.st_mode))
             {
               if (!glnx_file_copy_at (src_dfd_iter.fd, dent->d_name, &child_stbuf, dest_dfd,
-                                      dent->d_name,
-                                      sysroot_flags_to_copy_flags (GLNX_FILE_COPY_OVERWRITE, flags),
+                                      dent->d_name, GLNX_FILE_COPY_OVERWRITE | copy_flags,
                                       cancellable, error))
                 return glnx_prefix_error (error, "Copying %s", dent->d_name);
             }
@@ -468,7 +467,8 @@ copy_modified_config_file (int orig_etc_fd, int modified_etc_fd, int new_etc_fd,
 
   if (S_ISDIR (modified_stbuf.st_mode))
     {
-      if (!copy_dir_recurse (modified_etc_fd, new_etc_fd, path, flags, cancellable, error))
+      GLnxFileCopyFlags copy_flags = sysroot_flags_to_copy_flags (0, flags);
+      if (!copy_dir_recurse (modified_etc_fd, new_etc_fd, path, copy_flags, cancellable, error))
         return FALSE;
     }
   else if (S_ISLNK (modified_stbuf.st_mode) || S_ISREG (modified_stbuf.st_mode))
@@ -600,45 +600,14 @@ merge_configuration_from (OstreeSysroot *sysroot, OstreeDeployment *merge_deploy
   return TRUE;
 }
 
-#ifdef HAVE_COMPOSEFS
-static gboolean
-compare_verity_digests (GVariant *metadata_composefs, const guchar *fsverity_digest, GError **error)
-{
-  const guchar *expected_digest;
-
-  if (metadata_composefs == NULL)
-    return TRUE;
-
-  if (g_variant_n_children (metadata_composefs) != OSTREE_SHA256_DIGEST_LEN)
-    return glnx_throw (error, "Expected composefs fs-verity in metadata has the wrong size");
-
-  expected_digest = g_variant_get_data (metadata_composefs);
-  if (memcmp (fsverity_digest, expected_digest, OSTREE_SHA256_DIGEST_LEN) != 0)
-    {
-      char actual_checksum[OSTREE_SHA256_STRING_LEN + 1];
-      char expected_checksum[OSTREE_SHA256_STRING_LEN + 1];
-
-      ostree_checksum_inplace_from_bytes (fsverity_digest, actual_checksum);
-      ostree_checksum_inplace_from_bytes (expected_digest, expected_checksum);
-
-      return glnx_throw (error,
-                         "Generated composefs image digest (%s) doesn't match expected digest (%s)",
-                         actual_checksum, expected_checksum);
-    }
-
-  return TRUE;
-}
-
-#endif
-
 /* Look up @revision in the repository, and check it out in
  * /ostree/deploy/OS/deploy/${treecsum}.${deployserial}.
  * A dfd for the result is returned in @out_deployment_dfd.
  */
 static gboolean
 checkout_deployment_tree (OstreeSysroot *sysroot, OstreeRepo *repo, OstreeDeployment *deployment,
-                          const char *revision, int *out_deployment_dfd, GCancellable *cancellable,
-                          GError **error)
+                          const char *revision, int *out_deployment_dfd, guint64 *checkout_elapsed,
+                          guint64 *composefs_elapsed, GCancellable *cancellable, GError **error)
 {
   GLNX_AUTO_PREFIX_ERROR ("Checking out deployment tree", error);
   /* Find the directory with deployments for this stateroot */
@@ -661,14 +630,18 @@ checkout_deployment_tree (OstreeSysroot *sysroot, OstreeRepo *repo, OstreeDeploy
   /* Generate hardlink farm, then opendir it */
   OstreeRepoCheckoutAtOptions checkout_opts = { .process_passthrough_whiteouts = TRUE };
 
+  guint64 checkout_start_time = g_get_monotonic_time ();
   if (!ostree_repo_checkout_at (repo, &checkout_opts, osdeploy_dfd, checkout_target_name, csum,
                                 cancellable, error))
     return FALSE;
+  guint64 checkout_end_time = g_get_monotonic_time ();
 
   glnx_autofd int ret_deployment_dfd = -1;
   if (!glnx_opendirat (osdeploy_dfd, checkout_target_name, TRUE, &ret_deployment_dfd, error))
     return FALSE;
 
+  guint64 composefs_start_time = 0;
+  guint64 composefs_end_time = 0;
 #ifdef HAVE_COMPOSEFS
   /* TODO: Consider changing things in the future to parse the deployment config from memory, and
    * if composefs is enabled, then we can check out in "user mode" (i.e. only have suid binaries
@@ -686,7 +659,7 @@ checkout_deployment_tree (OstreeSysroot *sysroot, OstreeRepo *repo, OstreeDeploy
   // However, we don't load the keys here, because they may not exist, such
   // as in the initial deploy
   g_autoptr (ComposefsConfig) composefs_config
-      = otcore_load_composefs_config (prepare_root_config, FALSE, error);
+      = otcore_load_composefs_config ("", prepare_root_config, FALSE, error);
   if (!composefs_config)
     return glnx_prefix_error (error, "Reading composefs config");
 
@@ -696,60 +669,35 @@ checkout_deployment_tree (OstreeSysroot *sysroot, OstreeRepo *repo, OstreeDeploy
     composefs_enabled = repo->composefs_wanted;
   if (composefs_enabled == OT_TRISTATE_YES)
     {
-      g_autofree guchar *fsverity_digest = NULL;
-      g_auto (GLnxTmpfile) tmpf = {
-        0,
-      };
-      g_autoptr (GVariant) commit_variant = NULL;
-
-      if (!ostree_repo_load_commit (repo, revision, &commit_variant, NULL, error))
+      composefs_start_time = g_get_monotonic_time ();
+      // TODO: Clean up our mess around composefs/fsverity...we have duplication
+      // between the repo config and the sysroot config, *and* we need to better
+      // handle skew between repo config and repo state (e.g. "post-copy" should
+      // support transitioning verity on and off in general).
+      // For now we configure things such that the fsverity digest is only added
+      // if present on disk in the unsigned case, and in the signed case unconditionally
+      // require it.
+      g_auto (GVariantBuilder) cfs_checkout_opts_builder
+          = G_VARIANT_BUILDER_INIT (G_VARIANT_TYPE_VARDICT);
+      guint32 composefs_requested = 1;
+      if (composefs_config->is_signed)
+        composefs_requested = 2;
+      g_variant_builder_add (&cfs_checkout_opts_builder, "{sv}", "verity",
+                             g_variant_new_uint32 (composefs_requested));
+      g_debug ("composefs requested: %u", composefs_requested);
+      g_autoptr (GVariant) cfs_checkout_opts
+          = g_variant_ref_sink (g_variant_builder_end (&cfs_checkout_opts_builder));
+      if (!ostree_repo_checkout_composefs (repo, cfs_checkout_opts, ret_deployment_dfd,
+                                           OSTREE_COMPOSEFS_NAME, csum, cancellable, error))
         return FALSE;
-
-      g_autoptr (GVariant) metadata = g_variant_get_child_value (commit_variant, 0);
-      g_autoptr (GVariant) metadata_composefs = g_variant_lookup_value (
-          metadata, OSTREE_COMPOSEFS_DIGEST_KEY_V0, G_VARIANT_TYPE_BYTESTRING);
-
-      /* Create a composefs image and put in deploy dir */
-      g_autoptr (OstreeComposefsTarget) target = ostree_composefs_target_new ();
-
-      g_autoptr (GFile) commit_root = NULL;
-      if (!ostree_repo_read_commit (repo, csum, &commit_root, NULL, cancellable, error))
-        return FALSE;
-
-      if (!ostree_repo_checkout_composefs (repo, target, (OstreeRepoFile *)commit_root, cancellable,
-                                           error))
-        return FALSE;
-
-      g_autofree char *composefs_cfs_path
-          = g_strdup_printf ("%s/" OSTREE_COMPOSEFS_NAME, checkout_target_name);
-
-      g_debug ("writing %s", composefs_cfs_path);
-
-      if (!glnx_open_tmpfile_linkable_at (osdeploy_dfd, checkout_target_name, O_WRONLY | O_CLOEXEC,
-                                          &tmpf, error))
-        return FALSE;
-
-      if (!ostree_composefs_target_write (target, tmpf.fd, &fsverity_digest, cancellable, error))
-        return FALSE;
-
-      /* If the commit specified a composefs digest, verify it */
-      if (!compare_verity_digests (metadata_composefs, fsverity_digest, error))
-        return FALSE;
-
-      if (!glnx_fchmod (tmpf.fd, 0644, error))
-        return FALSE;
-
-      if (!_ostree_tmpf_fsverity (repo, &tmpf, NULL, error))
-        return FALSE;
-
-      if (!glnx_link_tmpfile_at (&tmpf, GLNX_LINK_TMPFILE_REPLACE, osdeploy_dfd, composefs_cfs_path,
-                                 error))
-        return FALSE;
+      composefs_end_time = g_get_monotonic_time ();
     }
   else
     g_debug ("not using composefs");
 #endif
 
+  *checkout_elapsed = (checkout_end_time - checkout_start_time);
+  *composefs_elapsed = (composefs_end_time - composefs_start_time);
   if (out_deployment_dfd)
     *out_deployment_dfd = glnx_steal_fd (&ret_deployment_dfd);
   return TRUE;
@@ -1977,8 +1925,10 @@ install_deployment_kernel (OstreeSysroot *sysroot, int new_bootversion,
         }
       else
         {
+          // Don't copy xattrs for devicetree; Fedora derives label them modules_t which is
+          // wrong for when they're installed, we want the default boot_t.
           if (!copy_dir_recurse (kernel_layout->boot_dfd, bootcsum_dfd,
-                                 kernel_layout->devicetree_srcpath, sysroot->debug_flags,
+                                 kernel_layout->devicetree_srcpath, GLNX_FILE_COPY_NOXATTRS,
                                  cancellable, error))
             return FALSE;
         }
@@ -2706,8 +2656,9 @@ auto_early_prune_old_deployments (OstreeSysroot *self, GPtrArray *new_deployment
            *
            * An alternative is working with the block size instead, which would
            * be easier to handle. */
-          g_printerr ("bootcsum %s size exceeds %u; disabling auto-prune optimization\n", bootdir,
-                      G_MAXUINT);
+          ot_journal_print (LOG_WARNING,
+                            "bootcsum %s size exceeds %u; disabling auto-prune optimization",
+                            bootdir, G_MAXUINT);
           return TRUE;
         }
 
@@ -2740,8 +2691,9 @@ auto_early_prune_old_deployments (OstreeSysroot *self, GPtrArray *new_deployment
       /* see similar logic in previous loop */
       if (bootdir_size > G_MAXUINT)
         {
-          g_printerr (
-              "deployment %s kernel layout size exceeds %u; disabling auto-prune optimization\n",
+          ot_journal_print (
+              LOG_WARNING,
+              "deployment %s kernel layout size exceeds %u; disabling auto-prune optimization",
               ostree_deployment_get_csum (deployment), G_MAXUINT);
           return TRUE;
         }
@@ -2763,12 +2715,13 @@ auto_early_prune_old_deployments (OstreeSysroot *self, GPtrArray *new_deployment
      * and old bootdirs? */
     if (bootfs_has_space)
       {
-        g_printerr ("bootfs is sufficient for calculated new size: %s\n", net_new_formatted);
+        ot_journal_print (LOG_INFO, "bootfs is sufficient for calculated new size: %s",
+                          net_new_formatted);
         return TRUE; /* nothing to do! */
       }
   }
 
-  g_printerr ("bootfs requires additional space: %s\n", net_new_formatted);
+  ot_journal_print (LOG_INFO, "bootfs requires additional space: %s", net_new_formatted);
   /* OK, we would fail if we tried to write the new bootdirs. Is it salvageable?
    * First, calculate how much space we could save with the bootcsums scheduled
    * for removal. */
@@ -2781,7 +2734,7 @@ auto_early_prune_old_deployments (OstreeSysroot *self, GPtrArray *new_deployment
 
   {
     g_autofree char *to_remove_formated = g_format_size (bootcsum_dirs_to_remove_total_size);
-    g_printerr ("Size to prune from bootfs: %s\n", to_remove_formated);
+    ot_journal_print (LOG_INFO, "Size to prune from bootfs: %s", to_remove_formated);
   }
 
   if (net_new_bootcsum_dirs_total_size > bootcsum_dirs_to_remove_total_size)
@@ -2798,12 +2751,14 @@ auto_early_prune_old_deployments (OstreeSysroot *self, GPtrArray *new_deployment
         {
           /* Even if we auto-pruned, the new bootdirs wouldn't fit. Just let the
            * code continue and let it hit ENOSPC. */
-          g_printerr ("Disabling auto-prune optimization; insufficient space left in bootfs\n");
+          ot_journal_print (LOG_WARNING,
+                            "Disabling auto-prune optimization; insufficient space left in bootfs");
           return TRUE;
         }
     }
 
-  g_printerr ("Insufficient space left in bootfs; updating bootloader in two steps\n");
+  ot_journal_print (LOG_INFO,
+                    "Insufficient space left in bootfs; updating bootloader in two steps");
 
   /* Auto-pruning can salvage the situation. Calculate the set of deployments in common. */
   g_autoptr (GPtrArray) common_deployments = g_ptr_array_new ();
@@ -3246,8 +3201,10 @@ sysroot_initialize_deployment (OstreeSysroot *self, const char *osname, const ch
 
   /* Check out the userspace tree onto the filesystem */
   glnx_autofd int deployment_dfd = -1;
-  if (!checkout_deployment_tree (self, repo, new_deployment, revision, &deployment_dfd, cancellable,
-                                 error))
+  guint64 checkout_elapsed = 0;
+  guint64 composefs_elapsed = 0;
+  if (!checkout_deployment_tree (self, repo, new_deployment, revision, &deployment_dfd,
+                                 &checkout_elapsed, &composefs_elapsed, cancellable, error))
     return FALSE;
 
   g_autoptr (OstreeKernelLayout) kernel_layout = NULL;
@@ -3259,11 +3216,19 @@ sysroot_initialize_deployment (OstreeSysroot *self, const char *osname, const ch
                                                 opts ? opts->override_kernel_argv : NULL);
   _ostree_deployment_set_overlay_initrds (new_deployment, opts ? opts->overlay_initrds : NULL);
 
+  guint64 etc_start_time = g_get_monotonic_time ();
   if (!prepare_deployment_etc (self, repo, new_deployment, deployment_dfd, cancellable, error))
     return FALSE;
+  guint64 etc_elapsed = g_get_monotonic_time () - etc_start_time;
 
   if (!prepare_deployment_var (self, new_deployment, deployment_dfd, cancellable, error))
     return FALSE;
+
+  g_autofree char *checkout_elapsed_str = ot_format_human_duration (checkout_elapsed);
+  g_autofree char *composefs_elapsed_str = ot_format_human_duration (composefs_elapsed);
+  g_autofree char *etc_elapsed_str = ot_format_human_duration (etc_elapsed);
+  ot_journal_print (LOG_INFO, "Created deployment; subtasks: checkout=%s composefs=%s etc=%s",
+                    checkout_elapsed_str, composefs_elapsed_str, etc_elapsed_str);
 
   ot_transfer_out_value (out_new_deployment, &new_deployment);
   return TRUE;
