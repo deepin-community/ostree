@@ -1,0 +1,14 @@
+--- a/src/rofiles-fuse/main.c
++++ b/src/rofiles-fuse/main.c
+@@ -154,7 +154,10 @@
+ static int
+ callback_mknod (const char *path, mode_t mode, dev_t rdev)
+ {
+-  return -EROFS;
++  path = ENSURE_RELPATH (path);
++  if (mknodat (basefd, path, mode, rdev) == -1)
++    return -errno;
++  return 0;
+ }
+ 
+ static int

@@ -1,3 +1,9 @@
+ostree (2024.6-1deepin6) unstable; urgency=medium
+
+  * rofiles-fuse support mknod. 
+
+ -- xiamengliang <xiamengliang@uniontech.com>  Thu, 05 Dec 2024 17:34:45 +0800
+
 ostree (2024.6-1deepin5) unstable; urgency=medium
 
   * fix: ensure update boot configuration for each deployment.

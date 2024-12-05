@@ -5,3 +5,4 @@ deepin-deploy-when-root-is-overlay.patch
 make-socket-callback-during-cleanup-into.patch
 deepin-save-last-boot-as-defalt-for-grub.patch
 deepin-use-custom-grub-message.patch
+deepin-rofiles-fuse-support-mknod.patch
