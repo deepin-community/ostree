@@ -1,3 +1,9 @@
+ostree (2024.6-1deepin7) unstable; urgency=medium
+
+  * add localization for ostree grub.
+
+ -- wangzhaohui <wangzhaohui@uniontech.com>  Wed, 11 Dec 2024 14:38:47 +0800
+
 ostree (2024.6-1deepin6) unstable; urgency=medium
 
   * rofiles-fuse support mknod. 

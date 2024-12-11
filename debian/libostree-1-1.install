@@ -1,1 +1,2 @@
 usr/lib/*/libostree-1.so.*
+mo/*.mo /usr/share/locale/zh_CN/LC_MESSAGES/
