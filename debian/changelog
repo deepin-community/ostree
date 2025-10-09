@@ -1,3 +1,9 @@
+ostree (2024.6-1deepin9) unstable; urgency=medium
+
+  * add unescape for user and password.
+
+ -- xiamengliang  <xiamengliang@uniontech.com>  Thu, 09 Oct 2025 10:06:08 +0800
+
 ostree (2024.6-1deepin8) unstable; urgency=medium
 
   * Add sunway support.
