@@ -1,3 +1,9 @@
+ostree (2024.6-1deepin10) unstable; urgency=medium
+
+  * Add support for limiting the maximum receive speed
+
+ -- xiamengliang <xiamengliang@uniontech.com>  Mon, 27 Oct 2025 16:20:50 +0800
+
 ostree (2024.6-1deepin9) unstable; urgency=medium
 
   * add unescape for user and password.

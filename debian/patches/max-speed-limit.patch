@@ -1,0 +1,232 @@
+--- a/src/libostree/ostree-fetcher-curl.c
++++ b/src/libostree/ostree-fetcher-curl.c
+@@ -84,6 +84,7 @@
+   guint32 opt_low_speed_time;
+   gboolean opt_retry_all;
+   guint32 opt_max_outstanding_fetcher_requests;
++  guint32 opt_max_recv_speed;
+ 
+   GMainContext *mainctx;
+   CURLM *multi;
+@@ -701,6 +702,12 @@
+ }
+ 
+ void
++_ostree_fetcher_set_max_recv_speed (OstreeFetcher *self, guint32 opt_max_recv_speed)
++{
++  self->opt_max_recv_speed = opt_max_recv_speed;
++}
++
++void
+ _ostree_fetcher_set_retry_all (OstreeFetcher *self, gboolean opt_retry_all)
+ {
+   self->opt_retry_all = opt_retry_all;
+@@ -711,6 +718,9 @@
+                                                       guint32 opt_max_outstanding_fetcher_requests)
+ {
+   self->opt_max_outstanding_fetcher_requests = opt_max_outstanding_fetcher_requests;
++  #if CURL_AT_LEAST_VERSION(7, 30, 0)
++    curl_multi_setopt (self->multi, CURLMOPT_MAX_TOTAL_CONNECTIONS, opt_max_outstanding_fetcher_requests);
++  #endif
+ }
+ 
+ void
+@@ -965,6 +975,19 @@
+   g_assert_cmpint (rc, ==, CURLM_OK);
+   rc = curl_easy_setopt (req->easy, CURLOPT_LOW_SPEED_TIME, req->fetcher->opt_low_speed_time);
+   g_assert_cmpint (rc, ==, CURLM_OK);
++  if (req->fetcher->opt_max_recv_speed > 0) {
++    guint32 task_max_speed = req->fetcher->opt_max_recv_speed / req->fetcher->opt_max_outstanding_fetcher_requests;
++    if (task_max_speed < 1024)
++      task_max_speed = 1024;
++
++    rc = curl_easy_setopt (req->easy, CURLOPT_MAX_RECV_SPEED_LARGE, task_max_speed);
++    g_assert_cmpint (rc, ==, CURLM_OK);
++
++    if (task_max_speed < 16 * 1024) {
++      rc = curl_easy_setopt (req->easy, CURLOPT_BUFFERSIZE, task_max_speed);
++      g_assert_cmpint (rc, ==, CURLM_OK);
++    }
++  }
+   /* closure bindings -> task */
+   rc = curl_easy_setopt (req->easy, CURLOPT_PRIVATE, task);
+   g_assert_cmpint (rc, ==, CURLM_OK);
+--- a/src/libostree/ostree-fetcher-soup.c
++++ b/src/libostree/ostree-fetcher-soup.c
+@@ -398,6 +398,12 @@
+ }
+ 
+ void
++_ostree_fetcher_set_max_recv_speed (OstreeFetcher *self, guint32 opt_max_recv_speed)
++{
++  // TODO
++}
++
++void
+ _ostree_fetcher_set_retry_all (OstreeFetcher *self, gboolean opt_retry_all)
+ {
+   // TODO
+--- a/src/libostree/ostree-fetcher-soup3.c
++++ b/src/libostree/ostree-fetcher-soup3.c
+@@ -394,6 +394,12 @@
+ }
+ 
+ void
++_ostree_fetcher_set_max_recv_speed (OstreeFetcher *self, guint32 opt_max_recv_speed)
++{
++  // TODO
++}
++
++void
+ _ostree_fetcher_set_retry_all (OstreeFetcher *self, gboolean opt_retry_all)
+ {
+   // TODO
+--- a/src/libostree/ostree-fetcher.h
++++ b/src/libostree/ostree-fetcher.h
+@@ -103,6 +103,8 @@
+ 
+ void _ostree_fetcher_set_low_speed_time (OstreeFetcher *self, guint32 opt_low_speed_time);
+ 
++void _ostree_fetcher_set_max_recv_speed (OstreeFetcher *self, guint32 opt_max_recv_speed);
++
+ void _ostree_fetcher_set_retry_all (OstreeFetcher *self, gboolean opt_retry_all);
+ 
+ void
+--- a/src/libostree/ostree-repo-pull.c
++++ b/src/libostree/ostree-repo-pull.c
+@@ -2937,6 +2937,7 @@
+                                  GVariant *extra_headers, const char *append_user_agent,
+                                  guint32 low_speed_limit, guint32 low_speed_time,
+                                  gboolean retry_all, guint32 max_outstanding_fetcher_requests,
++                                 guint32 max_recv_speed,
+                                  OstreeFetcherSecurityState *out_state, GError **error)
+ {
+   OstreeFetcher *fetcher = NULL;
+@@ -3006,6 +3007,7 @@
+ 
+   _ostree_fetcher_set_low_speed_limit (fetcher, low_speed_limit);
+   _ostree_fetcher_set_low_speed_time (fetcher, low_speed_time);
++  _ostree_fetcher_set_max_recv_speed(fetcher, max_recv_speed);
+   _ostree_fetcher_set_retry_all (fetcher, retry_all);
+   _ostree_fetcher_set_max_outstanding_fetcher_requests (fetcher, max_outstanding_fetcher_requests);
+ 
+@@ -3236,7 +3238,7 @@
+   pull_data->fetcher = _ostree_repo_remote_new_fetcher (
+       pull_data->repo, remote_name, FALSE, pull_data->extra_headers, pull_data->append_user_agent,
+       pull_data->low_speed_limit, pull_data->low_speed_time, pull_data->retry_all,
+-      pull_data->max_outstanding_fetcher_requests, &pull_data->fetcher_security_state, error);
++      pull_data->max_outstanding_fetcher_requests, pull_data->max_recv_speed, &pull_data->fetcher_security_state, error);
+   if (pull_data->fetcher == NULL)
+     return FALSE;
+ 
+@@ -3530,6 +3532,7 @@
+   gboolean opt_n_network_retries_set = FALSE;
+   gboolean opt_low_speed_limit_set = FALSE;
+   gboolean opt_low_speed_time_set = FALSE;
++  gboolean opt_max_recv_speed_set = FALSE;
+   gboolean opt_retry_all_set = FALSE;
+   gboolean opt_max_outstanding_fetcher_requests_set = FALSE;
+   gboolean opt_ref_keyring_map_set = FALSE;
+@@ -3600,10 +3603,12 @@
+           = g_variant_lookup (options, "low-speed-limit-bytes", "u", &pull_data->low_speed_limit);
+       opt_low_speed_time_set
+           = g_variant_lookup (options, "low-speed-time-seconds", "u", &pull_data->low_speed_time);
++      opt_max_recv_speed_set
++          = g_variant_lookup (options, "max-recv-speed", "u", &pull_data->max_recv_speed);
+       opt_retry_all_set
+           = g_variant_lookup (options, "retry-all-network-errors", "b", &pull_data->retry_all);
+       opt_max_outstanding_fetcher_requests_set
+-          = g_variant_lookup (options, "max-outstanding-fetcher-requests", "b",
++          = g_variant_lookup (options, "max-outstanding-fetcher-requests", "u",
+                               &pull_data->max_outstanding_fetcher_requests);
+       opt_n_network_retries_set
+           = g_variant_lookup (options, "n-network-retries", "u", &pull_data->n_network_retries);
+@@ -3683,6 +3688,8 @@
+     pull_data->low_speed_limit = OPT_LOWSPEEDLIMIT_DEFAULT;
+   if (!opt_low_speed_time_set)
+     pull_data->low_speed_time = OPT_LOWSPEEDTIME_DEFAULT;
++  if (!opt_max_recv_speed_set)
++    pull_data->max_recv_speed = 0;
+   if (!opt_retry_all_set)
+     pull_data->retry_all = OPT_RETRYALL_DEFAULT;
+   if (!opt_max_outstanding_fetcher_requests_set)
+@@ -5737,7 +5744,7 @@
+                 goto error;
+ 
+               fetcher = _ostree_repo_remote_new_fetcher (self, result->remote->name, TRUE, NULL,
+-                                                         NULL, 0, 0, TRUE, 0, NULL, &error);
++                                                         NULL, 0, 0, TRUE, 0, 0, NULL, &error);
+               if (fetcher == NULL)
+                 goto error;
+ 
+@@ -6353,6 +6360,7 @@
+   const char *append_user_agent = NULL;
+   guint32 low_speed_limit = OPT_LOWSPEEDLIMIT_DEFAULT;
+   guint32 low_speed_time = OPT_LOWSPEEDTIME_DEFAULT;
++  guint32 max_recv_speed = 0;
+   gboolean retry_all = OPT_RETRYALL_DEFAULT;
+   guint32 max_outstanding_fetcher_requests = OPT_OSTREE_MAX_OUTSTANDING_FETCHER_REQUESTS_DEFAULT;
+   guint n_network_retries = DEFAULT_N_NETWORK_RETRIES;
+@@ -6382,8 +6390,10 @@
+       (void)g_variant_lookup (options, "low-speed-limit-bytes", "u", &low_speed_limit);
+       (void)g_variant_lookup (options, "low-speed-time-seconds", "u", &low_speed_time);
+       (void)g_variant_lookup (options, "retry-all-network-errors", "b", &retry_all);
+-      (void)g_variant_lookup (options, "max-outstanding-fetcher-requests", "b",
++      (void)g_variant_lookup (options, "max-outstanding-fetcher-requests", "u",
+                               &max_outstanding_fetcher_requests);
++      (void)g_variant_lookup (options, "max-recv-speed", "u",
++                              &max_recv_speed);
+     }
+ 
+   if (!ostree_repo_remote_get_gpg_verify_summary (self, name, &gpg_verify_summary, error))
+@@ -6397,7 +6407,7 @@
+ 
+   fetcher = _ostree_repo_remote_new_fetcher (self, name, TRUE, extra_headers, append_user_agent,
+                                              low_speed_limit, low_speed_time, retry_all,
+-                                             max_outstanding_fetcher_requests, NULL, error);
++                                             max_outstanding_fetcher_requests, max_recv_speed, NULL, error);
+   if (fetcher == NULL)
+     return FALSE;
+ 
+--- a/src/ostree/ot-builtin-pull.c
++++ b/src/ostree/ot-builtin-pull.c
+@@ -48,6 +48,7 @@
+ static int opt_network_retries = -1;
+ static int opt_low_speed_limit_bytes = -1;
+ static int opt_low_speed_time_seconds = -1;
++static int opt_max_recv_speed = -1;
+ static int opt_max_outstanding_fetcher_requests = -1;
+ static char *opt_url;
+ static char **opt_localcache_repos;
+@@ -103,6 +104,9 @@
+           "The time in number seconds that the transfer speed should be below the "
+           "'low-speed-limit-bytes' setting for libcurl to abort (default: 30)",
+           "N" },
++        { "max-recv-speed", 0, 0, G_OPTION_ARG_INT, &opt_max_recv_speed,
++          "The maximum transfer speed per second for a transfer during the time set via ",
++          "N" },
+         { "max-outstanding-fetcher-requests", 0, 0, G_OPTION_ARG_INT,
+           &opt_max_outstanding_fetcher_requests,
+           "The max amount of concurrent connections allowed. (default: 8)", "N" },
+@@ -351,6 +355,11 @@
+           &builder, "{s@v}", "low-speed-time-seconds",
+           g_variant_new_variant (g_variant_new_uint32 (opt_low_speed_time_seconds)));
+ 
++    if (opt_max_recv_speed >= 0)
++      g_variant_builder_add (
++          &builder, "{s@v}", "max-recv-speed",
++          g_variant_new_variant (g_variant_new_uint32 (opt_max_recv_speed)));
++
+     if (opt_max_outstanding_fetcher_requests >= 0)
+       g_variant_builder_add (
+           &builder, "{s@v}", "max-outstanding-fetcher-requests",
+--- a/src/libostree/ostree-repo-pull-private.h
++++ b/src/libostree/ostree-repo-pull-private.h
+@@ -56,6 +56,7 @@
+   char *append_user_agent;
+   guint32 low_speed_limit;
+   guint32 low_speed_time;
++  guint32 max_recv_speed;
+   gboolean retry_all;
+   guint32 max_outstanding_fetcher_requests;
+ 

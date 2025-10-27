@@ -8,3 +8,4 @@ deepin-use-custom-grub-message.patch
 deepin-rofiles-fuse-support-mknod.patch
 add-sunway-support.patch
 uri_user_password_unescape.patch
+max-speed-limit.patch
