@@ -1,0 +1,69 @@
+From 1886b2f13bd431ae16301ec1432a0dbe7040677c Mon Sep 17 00:00:00 2001
+From: wrj97 <wurongjie@deepin.org>
+Date: Wed, 19 Nov 2025 11:10:12 +0800
+Subject: [PATCH] fix: allow curl fetcher to properly fallback to next mirror
+
+The current ostree curl fetcher has two issues that prevent proper fallback when using a mirrorlist:
+1. The max_size check does not account for non-2xx responses. When a server returns 3xx, 4xx, or 5xx, the response body may exceed max_size.
+2. Some state variables and temporary files are not reset when falling back to the next mirror.
+---
+ src/libostree/ostree-fetcher-curl.c | 36 +++++++++++++++++++++++------
+ 1 file changed, 29 insertions(+), 7 deletions(-)
+
+diff --git a/src/libostree/ostree-fetcher-curl.c b/src/libostree/ostree-fetcher-curl.c
+index d690289..4e67bd9 100644
+--- a/src/libostree/ostree-fetcher-curl.c
++++ b/src/libostree/ostree-fetcher-curl.c
+@@ -564,13 +564,19 @@ write_cb (void *ptr, size_t size, size_t nmemb, void *data)
+     {
+       if (realsize > req->max_size || (realsize + req->current_size) > req->max_size)
+         {
+-          const char *eff_url;
+-          curl_easy_getinfo (req->easy, CURLINFO_EFFECTIVE_URL, &eff_url);
+-          req->caught_write_error
+-              = g_error_new (G_IO_ERROR, G_IO_ERROR_FAILED,
+-                             "URI %s exceeded maximum size of %" G_GUINT64_FORMAT " bytes", eff_url,
+-                             req->max_size);
+-          return -1;
++          long response;
++          curl_easy_getinfo (req->easy, CURLINFO_RESPONSE_CODE, &response);
++          // Only report size exceeded error for successful HTTP responses (2xx status codes)
++          if (response >= 200 && response < 300)
++            {
++              const char *eff_url;
++              curl_easy_getinfo (req->easy, CURLINFO_EFFECTIVE_URL, &eff_url);
++              req->caught_write_error
++                  = g_error_new (G_IO_ERROR, G_IO_ERROR_FAILED,
++                                "URI %s exceeded maximum size of %" G_GUINT64_FORMAT " bytes", eff_url,
++                                req->max_size);
++              return -1;
++            }
+         }
+     }
+ 
+@@ -778,6 +784,22 @@ initiate_next_curl_request (FetcherRequest *req, GTask *task)
+   CURLcode rc;
+   OstreeFetcher *self = req->fetcher;
+ 
++  /* Reset request state for a new transfer:
++   * - Clear any previous write errors
++   * - Reset current transfer size counter
++   * - If in memory buffer mode, clear the output buffer
++   * - If in temporary file mode, truncate file and reset file pointer to beginning */
++  g_clear_error (&req->caught_write_error);
++  req->current_size = 0;
++  if (req->is_membuf && req->output_buf)
++    g_string_truncate (req->output_buf, 0);
++  else if (req->tmpf.initialized)
++    {
++      if (ftruncate (req->tmpf.fd, 0) != 0 || lseek (req->tmpf.fd, 0, SEEK_SET) != 0)
++        g_warning ("Failed to reset temp file for mirror retry: %s", g_strerror (errno));
++    }
++
++
+   if (req->easy)
+     curl_easy_cleanup (req->easy);
+   req->easy = curl_easy_init ();
+-- 
+2.50.1
+

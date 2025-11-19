@@ -1,3 +1,9 @@
+ostree (2024.6-1deepin11) unstable; urgency=medium
+
+  * Fix: allow curl fetcher to properly fallback to next mirror
+
+ -- wurongjie <wurongjie@uniontech.com>  Mon, 8 Dec 2025 16:20:50 +0800
+
 ostree (2024.6-1deepin10) unstable; urgency=medium
 
   * Add support for limiting the maximum receive speed
